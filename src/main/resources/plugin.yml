@@ -1,0 +1,3 @@
+name: 'ItsMyBot-Plugin'
+main: com.ordwen.ItsMyBotPlugin
+version: '1.0.0'
