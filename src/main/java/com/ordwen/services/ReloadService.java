@@ -1,13 +1,8 @@
-package com.ordwen.commands;
+package com.ordwen.services;
 
 import com.ordwen.ItsMyBotPlugin;
 import com.ordwen.configuration.ConfigFactory;
 import com.ordwen.utils.PluginLogger;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class ReloadService {
 

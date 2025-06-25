@@ -1,6 +1,6 @@
 package com.ordwen;
 
-import com.ordwen.commands.ReloadService;
+import com.ordwen.services.ReloadService;
 import com.ordwen.utils.PluginLogger;
 import com.ordwen.ws.PluginClient;
 import org.bukkit.plugin.java.JavaPlugin;
