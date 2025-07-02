@@ -6,7 +6,7 @@ import com.ordwen.utils.PluginLogger;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
-public class WebSocketClient implements IConfigurable {
+public class WSConfig implements IConfigurable {
 
     private final FileConfiguration config;
 
@@ -15,7 +15,7 @@ public class WebSocketClient implements IConfigurable {
     private String serverId;
     private String jwtSecret;
 
-    public WebSocketClient(FileConfiguration config) {
+    public WSConfig(FileConfiguration config) {
         this.config = config;
     }
 
@@ -38,8 +38,8 @@ public class WebSocketClient implements IConfigurable {
         }
     }
 
-    private static WebSocketClient getInstance() {
-        return ConfigFactory.getConfig(WebSocketClient.class);
+    private static WSConfig getInstance() {
+        return ConfigFactory.getConfig(WSConfig.class);
     }
 
     public static String getHost() {

@@ -4,7 +4,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import java.io.File;
 
-public interface IPluginFile {
+public interface PluginFile {
 
     /**
      * Load the plugin file.

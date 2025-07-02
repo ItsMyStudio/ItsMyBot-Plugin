@@ -1,13 +1,13 @@
 package com.ordwen.files.implementations;
 
 import com.ordwen.ItsMyBotPlugin;
-import com.ordwen.files.APluginFile;
+import com.ordwen.files.BasePluginFile;
 import com.ordwen.utils.PluginLogger;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 
-public class ConfigurationFile extends APluginFile {
+public class ConfigurationFile extends BasePluginFile {
 
     public ConfigurationFile(ItsMyBotPlugin plugin) {
         super(plugin);

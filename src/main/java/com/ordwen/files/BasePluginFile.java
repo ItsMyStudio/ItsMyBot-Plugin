@@ -5,14 +5,14 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import java.io.File;
 
-public abstract class APluginFile implements IPluginFile {
+public abstract class BasePluginFile implements PluginFile {
 
     protected final ItsMyBotPlugin plugin;
 
     protected FileConfiguration config;
     protected File file;
 
-    protected APluginFile(ItsMyBotPlugin plugin) {
+    protected BasePluginFile(ItsMyBotPlugin plugin) {
         this.plugin = plugin;
     }
 

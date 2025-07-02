@@ -2,6 +2,7 @@ package com.ordwen.services;
 
 import com.ordwen.ItsMyBotPlugin;
 import com.ordwen.configuration.ConfigFactory;
+import com.ordwen.files.FilesManager;
 import com.ordwen.utils.PluginLogger;
 
 public class ReloadService {
@@ -13,9 +14,12 @@ public class ReloadService {
     }
 
     public void reload() {
+        final FilesManager filesManager = new FilesManager(plugin);
         try {
-            plugin.reloadConfig();
-            ConfigFactory.registerConfigs(plugin.getConfig());
+            filesManager.load();
+            ConfigFactory.registerConfigs(filesManager.getConfigurationFile().getConfig());
+
+            plugin.reloadWSClient();
         } catch (IllegalStateException e) {
             PluginLogger.error("An error occurred while reloading the plugin. Please check the logs for details.");
         }

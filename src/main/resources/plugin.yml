@@ -1,3 +1,21 @@
 name: 'ItsMyBot-Plugin'
 main: com.ordwen.ItsMyBotPlugin
 version: '1.0.0'
+
+commands:
+  discord:
+    description: default command
+    aliases:
+      - itsmybot
+      - imb
+
+permissions:
+  itsmybot.link:
+    description: 'Allows the player to link their Discord account'
+    default: true
+  itsmybot.unlink:
+    description: 'Allows the player to unlink their Discord account'
+    default: true
+  itsmybot.reload:
+    description: 'Allows the player to reload the plugin configuration'
+    default: op

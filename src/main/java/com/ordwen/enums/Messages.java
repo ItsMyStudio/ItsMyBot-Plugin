@@ -10,9 +10,25 @@ import java.util.Map;
 
 public enum Messages {
 
-    PLAYER_ONLY("player_only", "This command can only be executed by a player!"),
-    NO_PERMISSION("no_permission", "You do not have permission to execute this command!"),
-    PLAYER_HELP("player_help", " . . . ")
+    PLAYER_ONLY("player_only", "&cThis command can only be executed by a player!"),
+    NO_PERMISSION("no_permission", "&cYou do not have permission to execute this command!"),
+    PLAYER_HELP("player_help", String.join("\n",
+            "&aPlayer commands:",
+            "&e/discord link &a: link your Discord account",
+            "&e/discord unlink &a: unlink your Discord account",
+            "&e/discord claim &a: claim your Discord rewards"
+    )),
+    ADMIN_HELP("admin_help", String.join("\n",
+            "&aAdmin commands:",
+            "&e/discord reload &a: reload the plugin configuration"
+    )),
+    ERROR_OCCURRED("error_occurred", "&cAn error occurred while processing your request. Please contact support."),
+    LINK_SUCCESS("link_success", "&aYour Discord account has been successfully linked!"),
+    ALREADY_LINKED("already_linked", "&cYour Discord account is already linked!"),
+    INVALID_CODE("invalid_code", "&cThe code you provided is invalid! Please try again."),
+    CLAIM_SUCCESS("claim_success", "&aYou have successfully claimed your Discord rewards!"),
+    CLAIM_NO_REWARD("claim_no_reward", "&cYou have no rewards to claim at this time."),
+    PLUGIN_RELOADED("plugin_reloaded", "&ePlugin reloaded. Please check the console for any errors."),
     ;
 
     private final String path;

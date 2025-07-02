@@ -1,7 +1,7 @@
 package com.ordwen.configuration;
 
-import com.ordwen.configuration.essentials.Database;
-import com.ordwen.configuration.essentials.WebSocketClient;
+import com.ordwen.configuration.essentials.Prefix;
+import com.ordwen.configuration.essentials.WSConfig;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.LinkedHashMap;
@@ -14,8 +14,10 @@ public class ConfigFactory {
     private static final Map<Class<? extends IConfigurable>, IConfigurable> configs = new LinkedHashMap<>();
 
     public static void registerConfigs(FileConfiguration config) {
-        configs.put(WebSocketClient.class, new WebSocketClient(config));
-        configs.put(Database.class, new Database(config));
+        configs.clear();
+
+        configs.put(WSConfig.class, new WSConfig(config));
+        configs.put(Prefix.class, new Prefix(config));
 
         configs.values().forEach(IConfigurable::load);
     }

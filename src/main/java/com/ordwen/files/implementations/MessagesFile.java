@@ -2,13 +2,13 @@ package com.ordwen.files.implementations;
 
 import com.ordwen.ItsMyBotPlugin;
 import com.ordwen.enums.Messages;
-import com.ordwen.files.APluginFile;
+import com.ordwen.files.BasePluginFile;
 import com.ordwen.utils.PluginLogger;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 
-public class MessagesFile extends APluginFile {
+public class MessagesFile extends BasePluginFile {
 
     private static MessagesFile instance;
 

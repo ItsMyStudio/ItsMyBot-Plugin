@@ -4,14 +4,5 @@ websocket:
   server_id: "mc-server-1" # Unique identifier for the server
   jwt_secret: "#### REPLACE WITH YOUR SECRET ####" # Secret key for JWT signing
 
-# AVAILABLE MODES: MySQL, SQLite
-# RECOMMENDED: SQLite
-storage_mode: "SQLite"
-
-# MySQL Database Connection
-database:
-  name: "MyDatabase"   # Database name
-  host: "127.0.0.1"    # Database host
-  user: "admin"        # Database user
-  password: "1234"     # Database password
-  port: 3306           # Database port
+# Prefix for chat messages
+prefix: "&7[&bItsMyBot&7] &r"
