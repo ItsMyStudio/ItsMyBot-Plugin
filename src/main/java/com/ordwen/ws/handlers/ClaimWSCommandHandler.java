@@ -52,7 +52,6 @@ public class ClaimWSCommandHandler implements WSCommandHandler {
         player.sendMessage(Messages.ERROR_OCCURRED.toString());
     }
 
-
     private void handleRewards(Player player, JsonArray rewardsJson) {
         for (JsonElement element : rewardsJson) {
             final JsonObject rewardObj = element.getAsJsonObject();
