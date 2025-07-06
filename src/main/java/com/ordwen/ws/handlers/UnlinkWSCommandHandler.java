@@ -29,7 +29,14 @@ public class UnlinkWSCommandHandler implements WSCommandHandler{
             player.sendMessage("You have been successfully unlinked.");
         } else if ("UNLINK_FAIL".equals(type)) {
             final String reason = response.get("reason").getAsString();
-            player.sendMessage("Unlink failed: " + reason);
+            if ("NOT_LINKED".equals(reason)) {
+                player.sendMessage("You are not linked to any account.");
+            } else if ("SERVER_MISMATCH".equals(reason)) {
+                player.sendMessage(Messages.NOT_LINKED.toString());
+            } else {
+                player.sendMessage(Messages.ERROR_OCCURRED.toString());
+                PluginLogger.error("Unlink failed: " + reason + " for player " + player.getName());
+            }
         } else {
             player.sendMessage("Unexpected response type: " + type);
             player.sendMessage(Messages.ERROR_OCCURRED.toString());

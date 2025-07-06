@@ -25,6 +25,7 @@ public enum Messages {
     ERROR_OCCURRED("error_occurred", "&cAn error occurred while processing your request. Please contact support."),
     LINK_SUCCESS("link_success", "&aYour Discord account has been successfully linked!"),
     ALREADY_LINKED("already_linked", "&cYour Discord account is already linked!"),
+    NOT_LINKED("not_linked", "&cYou have not linked your Discord account yet! Use &e/discord link &cto link it."),
     INVALID_CODE("invalid_code", "&cThe code you provided is invalid! Please try again."),
     CLAIM_SUCCESS("claim_success", "&aYou have successfully claimed your Discord rewards!"),
     CLAIM_NO_REWARD("claim_no_reward", "&cYou have no rewards to claim at this time."),
