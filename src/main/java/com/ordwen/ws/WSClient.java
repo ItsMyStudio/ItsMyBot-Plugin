@@ -4,8 +4,11 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.ordwen.configuration.essentials.WSConfig;
-import com.ordwen.utils.PluginLogger;
+import com.ordwen.ItsMyBotPlugin;
+import com.ordwen.configuration.essential.WSConfig;
+import com.ordwen.util.PluginLogger;
+import com.ordwen.ws.handler.role.RoleSyncWSCommandHandler;
+import com.ordwen.ws.handler.role.SyncErrorWSCommandHandler;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +32,9 @@ public class WSClient extends WebSocketListener {
     private WebSocket webSocket;
     private final OkHttpClient client;
 
-    public WSClient() {
+    private ItsMyBotPlugin plugin;
+
+    public WSClient(ItsMyBotPlugin plugin) {
         this.client = createClientAllowingSelfSigned();
     }
 
@@ -92,13 +97,20 @@ public class WSClient extends WebSocketListener {
         System.out.println("Received message: " + json);
         final String type = json.get("type").getAsString();
 
-        if (type.equals("AUTH_SUCCESS")) {
-            PluginLogger.info("Connected and authenticated successfully.");
-        } else if (type.equals("AUTH_FAIL")) {
-            PluginLogger.error("Authentication failed: " + json.get("error").getAsString());
-            PluginLogger.error("Please check your JWT secret and server ID configuration.");
-            webSocket.close(1000, "Authentication failed");
-            return;
+        switch (type) {
+            case "AUTH_SUCCESS":
+            case "AUTH_FAIL":
+                handleAuthResponse(json, type);
+                break;
+            case "ROLE_SYNC":
+                new RoleSyncWSCommandHandler(plugin).handleResponse(json);
+                break;
+            case "SYNC_ERROR":
+                new SyncErrorWSCommandHandler(plugin).handleResponse(json);
+                break;
+            default:
+                PluginLogger.warn("Received unhandled message type: " + type);
+                break;
         }
 
         if (json.has("id")) {
@@ -108,6 +120,18 @@ public class WSClient extends WebSocketListener {
             if (future != null) {
                 future.complete(json);
             }
+        }
+    }
+
+    private void handleAuthResponse(JsonObject json, String type) {
+        if (type.equals("AUTH_SUCCESS")) {
+            PluginLogger.info("Authentication successful. WebSocket is ready for use.");
+        } else if (type.equals("AUTH_FAIL")) {
+            String errorMessage = json.has("error") ? json.get("error").getAsString() : "Unknown error";
+            PluginLogger.error("Authentication failed: " + errorMessage);
+            webSocket.close(1000, "Authentication failed");
+        } else {
+            PluginLogger.warn("Received unexpected authentication response type: " + type);
         }
     }
 

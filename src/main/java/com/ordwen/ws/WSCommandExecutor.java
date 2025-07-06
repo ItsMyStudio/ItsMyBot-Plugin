@@ -2,7 +2,7 @@ package com.ordwen.ws;
 
 import com.google.gson.JsonObject;
 import com.ordwen.ItsMyBotPlugin;
-import com.ordwen.ws.handlers.WSCommandHandler;
+import com.ordwen.ws.handler.command.WSCommandHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 

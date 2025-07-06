@@ -1,7 +1,7 @@
 package com.ordwen.configuration;
 
-import com.ordwen.configuration.essentials.Prefix;
-import com.ordwen.configuration.essentials.WSConfig;
+import com.ordwen.configuration.essential.Prefix;
+import com.ordwen.configuration.essential.WSConfig;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.LinkedHashMap;

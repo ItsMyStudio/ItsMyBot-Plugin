@@ -1,15 +1,15 @@
 package com.ordwen;
 
-import com.ordwen.commands.DiscordCommand;
-import com.ordwen.commands.CommandRegistry;
-import com.ordwen.commands.handlers.admin.ReloadCommandHandler;
-import com.ordwen.commands.handlers.player.ClaimCommandHandler;
-import com.ordwen.commands.handlers.player.LinkCommandHandler;
-import com.ordwen.commands.handlers.player.UnlinkCommandHandler;
-import com.ordwen.files.FilesManager;
-import com.ordwen.listeners.PlayerJoinListener;
-import com.ordwen.services.ReloadService;
-import com.ordwen.utils.PluginLogger;
+import com.ordwen.command.DiscordCommand;
+import com.ordwen.command.CommandRegistry;
+import com.ordwen.command.handler.admin.ReloadCommandHandler;
+import com.ordwen.command.handler.player.ClaimCommandHandler;
+import com.ordwen.command.handler.player.LinkCommandHandler;
+import com.ordwen.command.handler.player.UnlinkCommandHandler;
+import com.ordwen.file.FilesManager;
+import com.ordwen.listener.PlayerJoinListener;
+import com.ordwen.service.ReloadService;
+import com.ordwen.util.PluginLogger;
 import com.ordwen.ws.WSClient;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -58,7 +58,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
 
     public void reloadWSClient() {
         if (wsClient == null) {
-            wsClient = new WSClient();
+            wsClient = new WSClient(this);
         }
 
         wsClient.disconnect();
@@ -67,7 +67,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
 
     public WSClient getWSClient() {
         if (wsClient == null) {
-            wsClient = new WSClient();
+            wsClient = new WSClient(this);
         }
         return wsClient;
     }
