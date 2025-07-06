@@ -11,6 +11,7 @@ import com.ordwen.listeners.PlayerJoinListener;
 import com.ordwen.services.ReloadService;
 import com.ordwen.utils.PluginLogger;
 import com.ordwen.ws.WSClient;
+import net.milkbowl.vault.permission.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class ItsMyBotPlugin extends JavaPlugin {
@@ -18,6 +19,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
     private FilesManager filesManager;
     private ReloadService reloadService;
 
+    private Permission permission;
     private WSClient wsClient;
 
     @Override
@@ -29,6 +31,8 @@ public class ItsMyBotPlugin extends JavaPlugin {
 
         this.reloadService = new ReloadService(this);
         reloadService.reload();
+
+        setupPermissions();
 
         final CommandRegistry commandRegistry = new CommandRegistry();
         commandRegistry.registerCommand(new LinkCommandHandler(this));
@@ -68,11 +72,26 @@ public class ItsMyBotPlugin extends JavaPlugin {
         return wsClient;
     }
 
+    private void setupPermissions() {
+        if (getServer().getPluginManager().getPlugin("Vault") != null) {
+            permission = getServer().getServicesManager().getRegistration(Permission.class).getProvider();
+            if (permission == null) {
+                PluginLogger.error("Vault permission provider not found!");
+            }
+        } else {
+            PluginLogger.info("Vault plugin not found! Groups sync will not work.");
+        }
+    }
+
     public FilesManager getFilesManager() {
         return filesManager;
     }
 
     public ReloadService getReloadService() {
         return reloadService;
+    }
+
+    public Permission getPermission() {
+        return permission;
     }
 }
