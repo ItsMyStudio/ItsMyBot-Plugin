@@ -7,7 +7,10 @@ import com.ordwen.command.handler.player.ClaimCommandHandler;
 import com.ordwen.command.handler.player.LinkCommandHandler;
 import com.ordwen.command.handler.player.UnlinkCommandHandler;
 import com.ordwen.file.FilesManager;
+import com.ordwen.listener.PlayerCommandListener;
 import com.ordwen.listener.PlayerJoinListener;
+import com.ordwen.listener.PlayerQuitListener;
+import com.ordwen.service.LogService;
 import com.ordwen.service.ReloadService;
 import com.ordwen.util.PluginLogger;
 import com.ordwen.ws.WSClient;
@@ -18,6 +21,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
 
     private FilesManager filesManager;
     private ReloadService reloadService;
+    private LogService logService;
 
     private Permission permission;
     private WSClient wsClient;
@@ -43,6 +47,11 @@ public class ItsMyBotPlugin extends JavaPlugin {
         getCommand("discord").setExecutor(new DiscordCommand(commandRegistry));
 
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerCommandListener(this), this);
+
+        this.logService = new LogService(this);
+        logService.logServerStart();
 
         PluginLogger.info("Plugin has been enabled!");
     }
@@ -50,6 +59,8 @@ public class ItsMyBotPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         PluginLogger.info("Plugin is shutting down...");
+        logService.logServerStop();
+
         if (wsClient != null) {
             wsClient.disconnect();
             wsClient.shutdown();
@@ -89,6 +100,10 @@ public class ItsMyBotPlugin extends JavaPlugin {
 
     public ReloadService getReloadService() {
         return reloadService;
+    }
+
+    public LogService getLogService() {
+        return logService;
     }
 
     public Permission getPermission() {

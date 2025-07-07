@@ -27,5 +27,6 @@ public class PlayerJoinListener implements Listener {
         }
 
         plugin.getWSClient().sendMessage(request.toString());
+        plugin.getLogService().logPlayerJoin(player);
     }
 }
