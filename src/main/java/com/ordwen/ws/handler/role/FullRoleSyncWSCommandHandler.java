@@ -5,9 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.ordwen.ItsMyBotPlugin;
 import com.ordwen.configuration.essential.WSConfig;
-import com.ordwen.enumeration.Messages;
 import com.ordwen.util.PluginLogger;
-import com.ordwen.ws.handler.command.WSCommandHandler;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.entity.Player;
 

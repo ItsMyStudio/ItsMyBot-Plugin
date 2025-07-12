@@ -13,8 +13,14 @@ import com.ordwen.listener.PlayerQuitListener;
 import com.ordwen.service.LogService;
 import com.ordwen.service.ReloadService;
 import com.ordwen.util.PluginLogger;
+import com.ordwen.util.RoleSyncUtil;
 import com.ordwen.ws.WSClient;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.event.EventBus;
+import net.luckperms.api.event.node.NodeMutateEvent;
 import net.milkbowl.vault.permission.Permission;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class ItsMyBotPlugin extends JavaPlugin {
@@ -25,6 +31,8 @@ public class ItsMyBotPlugin extends JavaPlugin {
 
     private Permission permission;
     private WSClient wsClient;
+
+    private AutoCloseable nodeMutateSubscription;
 
     @Override
     public void onEnable() {
@@ -46,9 +54,8 @@ public class ItsMyBotPlugin extends JavaPlugin {
 
         getCommand("discord").setExecutor(new DiscordCommand(commandRegistry));
 
-        getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
-        getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
-        getServer().getPluginManager().registerEvents(new PlayerCommandListener(this), this);
+        rgisterListeners();
+        hookLuckPerms();
 
         this.logService = new LogService(this);
         logService.logServerStart();
@@ -56,10 +63,50 @@ public class ItsMyBotPlugin extends JavaPlugin {
         PluginLogger.info("Plugin has been enabled!");
     }
 
+    private void rgisterListeners() {
+        getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerCommandListener(this), this);
+    }
+
+    private void hookLuckPerms() {
+        if (getServer().getPluginManager().getPlugin("LuckPerms") != null) {
+            final RegisteredServiceProvider<LuckPerms> provider = getServer().getServicesManager().getRegistration(LuckPerms.class);
+            if (provider == null) {
+                PluginLogger.error("LuckPerms provider not found! Please ensure LuckPerms is working correctly.");
+                return;
+            }
+
+            final LuckPerms luckPerms = provider.getProvider();
+            if (luckPerms == null) {
+                PluginLogger.error("LuckPerms provider is null! Please ensure LuckPerms is working correctly.");
+                return;
+            }
+
+            final EventBus eventBus = luckPerms.getEventBus();
+            this.nodeMutateSubscription = eventBus.subscribe(this, NodeMutateEvent.class, event -> {
+                final Player player = getServer().getPlayer(event.getTarget().getFriendlyName());
+                if (player != null && player.isOnline()) {
+                    RoleSyncUtil.sendFullRoleSync(this, player);
+                }
+            });
+        } else {
+            PluginLogger.info("LuckPerms plugin is missing! Server changes will not be synced with Discord until the next player joins.");
+        }
+    }
+
     @Override
     public void onDisable() {
         PluginLogger.info("Plugin is shutting down...");
         logService.logServerStop();
+
+        if (nodeMutateSubscription != null) {
+            try {
+                nodeMutateSubscription.close();
+            } catch (Exception e) {
+                PluginLogger.error("Failed to unsubscribe from LuckPerms events" + e.getMessage());
+            }
+        }
 
         if (wsClient != null) {
             wsClient.disconnect();
@@ -73,7 +120,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
         }
 
         wsClient.disconnect();
-        wsClient.connect();
+        getServer().getScheduler().runTaskLater(this, () -> wsClient.connect(), 40L);
     }
 
     public WSClient getWSClient() {

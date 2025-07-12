@@ -25,6 +25,8 @@ import java.util.concurrent.*;
 
 public class WSClient extends WebSocketListener {
 
+    private final ItsMyBotPlugin plugin;
+
     private final Map<String, CompletableFuture<JsonObject>> pendingRequests = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final Gson gson = new Gson();
@@ -32,9 +34,8 @@ public class WSClient extends WebSocketListener {
     private WebSocket webSocket;
     private final OkHttpClient client;
 
-    private ItsMyBotPlugin plugin;
-
     public WSClient(ItsMyBotPlugin plugin) {
+        this.plugin = plugin;
         this.client = createClientAllowingSelfSigned();
     }
 
@@ -65,13 +66,20 @@ public class WSClient extends WebSocketListener {
 
     public void disconnect() {
         if (webSocket != null) {
-            webSocket.close(1000, "Disconnecting");
+            webSocket.cancel();
             webSocket = null;
         }
     }
 
     public void shutdown() {
-        scheduler.shutdownNow();
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdownNow();
+        }
+
+        if (client != null) {
+            client.dispatcher().executorService().shutdownNow();
+            client.connectionPool().evictAll();
+        }
     }
 
     @Override
@@ -137,9 +145,8 @@ public class WSClient extends WebSocketListener {
 
     @Override
     public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
-        PluginLogger.error("Failed to connect to WebSocket server. Please verify that the bot is running and the host/port are correct.");
-        PluginLogger.error("Details: " + t.getMessage());
-
+        PluginLogger.warn("Failed to communicate with WS server. Details: " + t.getMessage());
+        PluginLogger.warn("If this is happening on reload, you can ignore this message.");
         if (response != null) {
             PluginLogger.error("Response: " + response.message());
         }
