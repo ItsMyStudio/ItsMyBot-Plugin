@@ -26,12 +26,10 @@ public class UnlinkWSCommandHandler implements WSCommandHandler {
     public void handleResponse(Player player, JsonObject response) {
         final String type = response.get("type").getAsString();
         if ("UNLINK_SUCCESS".equals(type)) {
-            player.sendMessage("You have been successfully unlinked.");
+            player.sendMessage(Messages.UNLINK_SUCCESS.toString());
         } else if ("UNLINK_FAIL".equals(type)) {
             final String reason = response.get("reason").getAsString();
             if ("NOT_LINKED".equals(reason)) {
-                player.sendMessage("You are not linked to any account.");
-            } else if ("SERVER_MISMATCH".equals(reason)) {
                 player.sendMessage(Messages.NOT_LINKED.toString());
             } else {
                 player.sendMessage(Messages.ERROR_OCCURRED.toString());

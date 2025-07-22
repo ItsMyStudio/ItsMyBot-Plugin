@@ -29,17 +29,31 @@ public class ClaimWSCommandHandler implements WSCommandHandler {
     @Override
     public void handleResponse(Player player, JsonObject response) {
         final String type = response.get("type").getAsString();
+
         if ("CLAIM_SUCCESS".equals(type)) {
             if (response.has("rewards")) {
-                final JsonArray rewardsJson = response.getAsJsonArray("rewards");
-                handleRewards(player, rewardsJson);
+                final JsonArray rewards = response.getAsJsonArray("rewards");
+                handleRewards(player, rewards);
             } else {
                 PluginLogger.warn("CLAIM_SUCCESS response missing 'rewards' array.");
             }
-
             player.sendMessage(Messages.CLAIM_SUCCESS.toString());
-        } else if ("CLAIM_NO_REWARD".equals(type)) {
-            player.sendMessage(Messages.CLAIM_NO_REWARD.toString());
+
+        } else if ("CLAIM_FAIL".equals(type)) {
+            final String reason = response.has("reason") ? response.get("reason").getAsString() : "UNKNOWN";
+
+            switch (reason) {
+                case "NO_REWARD":
+                    player.sendMessage(Messages.CLAIM_NO_REWARD.toString());
+                    break;
+                case "NOT_LINKED":
+                    player.sendMessage(Messages.NOT_LINKED.toString());
+                    break;
+                default:
+                    PluginLogger.error("Unknown claim failure reason: " + reason);
+                    player.sendMessage(Messages.ERROR_OCCURRED.toString());
+            }
+
         } else {
             PluginLogger.error("Unexpected response type: " + type);
             player.sendMessage(Messages.ERROR_OCCURRED.toString());
@@ -55,22 +69,41 @@ public class ClaimWSCommandHandler implements WSCommandHandler {
     private void handleRewards(Player player, JsonArray rewardsJson) {
         for (JsonElement element : rewardsJson) {
             final JsonObject rewardObj = element.getAsJsonObject();
-            final String type = rewardObj.get("type").getAsString();
 
-            switch (type.toUpperCase()) {
-                case "MESSAGE":
-                    final String msg = rewardObj.get("message").getAsString();
-                    player.sendMessage(TextFormatter.format(msg));
-                    break;
-                case "COMMAND":
-                    final JsonArray commandArray = rewardObj.getAsJsonArray("commands");
-                    for (JsonElement cmd : commandArray) {
-                        final String command = cmd.getAsString().replace("%player%", player.getName());
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-                    }
-                    break;
-                default:
-                    PluginLogger.warn("Unknown reward type: " + type);
+            if (rewardObj.has("message")) {
+                player.sendMessage(TextFormatter.format(rewardObj.get("message").getAsString()));
+            }
+
+            if (!rewardObj.has("actions")) {
+                continue;
+            }
+
+            final JsonArray actions = rewardObj.getAsJsonArray("actions");
+
+            for (JsonElement actionElement : actions) {
+                final String rawAction = actionElement.getAsString().trim();
+                final int firstSpace = rawAction.indexOf(']');
+                if (!rawAction.startsWith("[") || firstSpace == -1) {
+                    PluginLogger.warn("Malformed reward action: " + rawAction);
+                    continue;
+                }
+
+                final String prefix = rawAction.substring(1, firstSpace).trim().toLowerCase(); // message, console, player
+                final String content = rawAction.substring(firstSpace + 1).trim().replace("%player%", player.getName());
+
+                switch (prefix) {
+                    case "message":
+                        player.sendMessage(TextFormatter.format(content));
+                        break;
+                    case "console":
+                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), content);
+                        break;
+                    case "player":
+                        player.performCommand(content);
+                        break;
+                    default:
+                        PluginLogger.warn("Unknown reward action type: " + prefix);
+                }
             }
         }
     }
