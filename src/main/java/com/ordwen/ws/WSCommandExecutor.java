@@ -2,6 +2,7 @@ package com.ordwen.ws;
 
 import com.google.gson.JsonObject;
 import com.ordwen.ItsMyBotPlugin;
+import com.ordwen.configuration.essential.WSConfig;
 import com.ordwen.ws.handler.command.WSCommandHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -22,6 +23,10 @@ public class WSCommandExecutor {
 
         if (!message.has("id")) {
             message.addProperty("id", UUID.randomUUID().toString());
+        }
+
+        if (!message.has("server_id")) {
+            message.addProperty("server_id", WSConfig.getServerId());
         }
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->

@@ -3,7 +3,6 @@ package com.ordwen.ws.handler.command;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.ordwen.configuration.essential.WSConfig;
 import com.ordwen.enumeration.Messages;
 import com.ordwen.util.PluginLogger;
 import com.ordwen.util.TextFormatter;
@@ -22,7 +21,6 @@ public class ClaimWSCommandHandler implements WSCommandHandler {
         final JsonObject request = new JsonObject();
         request.addProperty("type", getType());
         request.addProperty("player_uuid", player.getUniqueId().toString());
-        request.addProperty("server_id", WSConfig.getServerId());
         return request;
     }
 

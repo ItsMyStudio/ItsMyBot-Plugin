@@ -1,7 +1,6 @@
 package com.ordwen.ws.handler.command;
 
 import com.google.gson.JsonObject;
-import com.ordwen.configuration.essential.WSConfig;
 import com.ordwen.enumeration.Messages;
 import com.ordwen.util.PluginLogger;
 import org.bukkit.entity.Player;
@@ -18,7 +17,6 @@ public class UnlinkWSCommandHandler implements WSCommandHandler {
         final JsonObject request = new JsonObject();
         request.addProperty("type", getType());
         request.addProperty("player_uuid", player.getUniqueId().toString());
-        request.addProperty("server_id", WSConfig.getServerId());
         return request;
     }
 

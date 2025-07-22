@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.ordwen.ItsMyBotPlugin;
-import com.ordwen.configuration.essential.WSConfig;
 import com.ordwen.util.PluginLogger;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.entity.Player;
@@ -32,17 +31,15 @@ public class FullRoleSyncWSCommandHandler implements WSRoleHandler {
         final JsonObject request = new JsonObject();
         request.addProperty("type", getType());
         request.addProperty("direction", "MC_TO_DISCORD");
-        request.addProperty("uuid", player.getUniqueId().toString());
+        request.addProperty("player_uuid", player.getUniqueId().toString());
 
-        String[] currentGroups = perm.getPlayerGroups(player);
+        final String[] currentGroups = perm.getPlayerGroups(player);
 
         final JsonArray rolesArray = new JsonArray();
         for (String group : currentGroups) {
             rolesArray.add(new JsonPrimitive(group));
         }
-
         request.add("roles", rolesArray);
-        request.addProperty("server_id", WSConfig.getServerId());
 
         return request;
     }

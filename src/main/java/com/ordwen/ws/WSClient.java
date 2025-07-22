@@ -102,32 +102,36 @@ public class WSClient extends WebSocketListener {
     @Override
     public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
         final JsonObject json = gson.fromJson(text, JsonObject.class);
-        System.out.println("Received message: " + json);
         final String type = json.get("type").getAsString();
+        final String id = json.has("id") ? json.get("id").getAsString() : null;
+        boolean handled = false;
 
         switch (type) {
             case "AUTH_SUCCESS":
             case "AUTH_FAIL":
                 handleAuthResponse(json, type);
+                handled = true;
                 break;
             case "ROLE_SYNC":
                 new RoleSyncWSCommandHandler(plugin).handleResponse(json);
+                handled = true;
                 break;
             case "SYNC_ERROR":
                 new SyncErrorWSCommandHandler(plugin).handleResponse(json);
-                break;
-            default:
-                PluginLogger.warn("Received unhandled message type: " + type);
+                handled = true;
                 break;
         }
 
-        if (json.has("id")) {
-            final String id = json.get("id").getAsString();
+        if (id != null) {
             final CompletableFuture<JsonObject> future = pendingRequests.remove(id);
-
             if (future != null) {
                 future.complete(json);
+                handled = true;
             }
+        }
+
+        if (!handled) {
+            PluginLogger.warn("Received unhandled message: " + text);
         }
     }
 

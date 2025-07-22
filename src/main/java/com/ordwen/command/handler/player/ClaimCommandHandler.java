@@ -8,7 +8,7 @@ import com.ordwen.ws.WSCommandExecutor;
 import com.ordwen.ws.handler.command.ClaimWSCommandHandler;
 import org.bukkit.entity.Player;
 
-public class ClaimCommandHandler extends CommandHandlerBase{
+public class ClaimCommandHandler extends CommandHandlerBase {
 
     private final WSCommandExecutor executor;
 
