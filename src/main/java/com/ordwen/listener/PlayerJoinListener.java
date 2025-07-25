@@ -1,7 +1,7 @@
 package com.ordwen.listener;
 
 import com.ordwen.ItsMyBotPlugin;
-import com.ordwen.util.RoleSyncUtil;
+import com.ordwen.ws.handler.role.RoleSyncUtil;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,7 +19,7 @@ public class PlayerJoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         final Player player = event.getPlayer();
 
-        if (!RoleSyncUtil.sendFullRoleSync(plugin, player)) return;
+        RoleSyncUtil.sendFullRoleSync(plugin, player);
         plugin.getLogService().logPlayerJoin(player);
     }
 }

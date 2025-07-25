@@ -13,7 +13,7 @@ import com.ordwen.listener.PlayerQuitListener;
 import com.ordwen.service.LogService;
 import com.ordwen.service.ReloadService;
 import com.ordwen.util.PluginLogger;
-import com.ordwen.util.RoleSyncUtil;
+import com.ordwen.ws.handler.role.RoleSyncUtil;
 import com.ordwen.ws.WSClient;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.event.EventBus;
@@ -87,7 +87,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
             this.nodeMutateSubscription = eventBus.subscribe(this, NodeMutateEvent.class, event -> {
                 final Player player = getServer().getPlayer(event.getTarget().getFriendlyName());
                 if (player != null && player.isOnline()) {
-                    RoleSyncUtil.sendFullRoleSync(this, player);
+                    RoleSyncUtil.sendRoleSyncUpdate(this, player);
                 }
             });
         } else {

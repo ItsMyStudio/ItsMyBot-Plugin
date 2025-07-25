@@ -7,8 +7,7 @@ import com.google.gson.JsonObject;
 import com.ordwen.ItsMyBotPlugin;
 import com.ordwen.configuration.essential.WSConfig;
 import com.ordwen.util.PluginLogger;
-import com.ordwen.ws.handler.role.RoleSyncWSCommandHandler;
-import com.ordwen.ws.handler.role.SyncErrorWSCommandHandler;
+import com.ordwen.ws.handler.role.RoleSyncUtil;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,12 +111,8 @@ public class WSClient extends WebSocketListener {
                 handleAuthResponse(json, type);
                 handled = true;
                 break;
-            case "ROLE_SYNC":
-                new RoleSyncWSCommandHandler(plugin).handleResponse(json);
-                handled = true;
-                break;
-            case "SYNC_ERROR":
-                new SyncErrorWSCommandHandler(plugin).handleResponse(json);
+            case "SYNC_ROLE":
+                RoleSyncUtil.handleSyncRole(plugin, json);
                 handled = true;
                 break;
         }
