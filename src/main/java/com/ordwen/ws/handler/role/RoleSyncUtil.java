@@ -9,6 +9,7 @@ import com.ordwen.configuration.essential.WSConfig;
 import com.ordwen.util.PluginLogger;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
@@ -24,15 +25,15 @@ public final class RoleSyncUtil {
 
     private RoleSyncUtil() {}
 
-    public static void sendFullRoleSync(ItsMyBotPlugin plugin, Player player) {
+    public static void sendFullRoleSync(ItsMyBotPlugin plugin, OfflinePlayer player) {
         sendRoleSync(plugin, player, TYPE_FULL_SYNC);
     }
 
-    public static void sendRoleSyncUpdate(ItsMyBotPlugin plugin, Player player) {
+    public static void sendRoleSyncUpdate(ItsMyBotPlugin plugin, OfflinePlayer player) {
         sendRoleSync(plugin, player, TYPE_UPDATE);
     }
 
-    private static void sendRoleSync(ItsMyBotPlugin plugin, Player player, String type) {
+    private static void sendRoleSync(ItsMyBotPlugin plugin, OfflinePlayer player, String type) {
         final Permission permission = plugin.getPermission();
         if (permission == null) return;
 
@@ -41,7 +42,7 @@ public final class RoleSyncUtil {
         request.addProperty("server_id", WSConfig.getServerId());
         request.addProperty("player_uuid", player.getUniqueId().toString());
 
-        final JsonArray roles = Arrays.stream(permission.getPlayerGroups(player))
+        final JsonArray roles = Arrays.stream(permission.getPlayerGroups("global", player))
                 .map(JsonPrimitive::new)
                 .collect(JsonArray::new, JsonArray::add, JsonArray::addAll);
         request.add("roles", roles);
@@ -59,9 +60,11 @@ public final class RoleSyncUtil {
         );
     }
 
-    private static void handleRoleSyncResponse(ItsMyBotPlugin plugin, Player player, JsonObject response) {
+    private static void handleRoleSyncResponse(ItsMyBotPlugin plugin, OfflinePlayer player, JsonObject response) {
         final Permission perm = plugin.getPermission();
         if (perm == null) return;
+
+        System.out.println("Handling role sync response: " + response);
 
         final String responseType = response.get("type").getAsString();
         switch (responseType) {
@@ -76,24 +79,30 @@ public final class RoleSyncUtil {
         }
     }
 
-    private static void applyRoleChanges(Permission perm, Player player, JsonObject response) {
+    private static void applyRoleChanges(Permission perm, OfflinePlayer player, JsonObject response) {
         applyRoleDelta(perm, player, response, "add", true);
         applyRoleDelta(perm, player, response, "remove", false);
     }
 
-    private static void applyRoleDelta(Permission perm, Player player, JsonObject json, String key, boolean add) {
-        if (!json.has(key)) return;
+    private static void applyRoleDelta(Permission perm, OfflinePlayer player, JsonObject json, String key, boolean add) {
+        System.out.println("Applying role delta: " + key + " for player: " + player.getName());
+        if (!json.has(key)) {
+            System.out.println("No roles to " + (add ? "add" : "remove") + " for player: " + player.getName());
+            return;
+        }
         for (JsonElement e : json.getAsJsonArray(key)) {
             final String role = e.getAsString();
             if (add) {
-                perm.playerAddGroup(player, role);
+                System.out.println("Adding role: " + role + " to player: " + player.getName());
+                perm.playerAddGroup("global", player, role);
             } else {
-                perm.playerRemoveGroup(player, role);
+                System.out.println("Removing role: " + role + " from player: " + player.getName());
+                perm.playerRemoveGroup("global", player, role);
             }
         }
     }
 
-    private static void logRoleSyncFailure(Player player, JsonObject response) {
+    private static void logRoleSyncFailure(OfflinePlayer player, JsonObject response) {
         final String reason = response.has("reason") ? response.get("reason").getAsString() : "UNKNOWN";
         PluginLogger.warn("Role sync failed for " + player.getName() + ": " + reason);
     }
@@ -102,9 +111,14 @@ public final class RoleSyncUtil {
         final Permission perm = plugin.getPermission();
         if (perm == null) return;
 
+        System.out.println("Handling SYNC_ROLE message: " + message);
         final String uuidStr = message.get("player_uuid").getAsString();
-        final Player player = plugin.getServer().getPlayer(UUID.fromString(uuidStr));
-        if (player == null) {
+        final OfflinePlayer player = plugin.getServer().getOfflinePlayer(UUID.fromString(uuidStr));
+        if (player == null || !player.hasPlayedBefore()) {
+            System.out.println("null ? " + (player == null));
+            if (player != null) {
+                System.out.println("Player has not played before: " + player.getName());
+            }
             PluginLogger.warn("Player not found for SYNC_ROLE: " + uuidStr);
             return;
         }
