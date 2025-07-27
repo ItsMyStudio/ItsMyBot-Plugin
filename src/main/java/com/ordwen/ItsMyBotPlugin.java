@@ -13,6 +13,7 @@ import com.ordwen.listener.PlayerQuitListener;
 import com.ordwen.service.LogService;
 import com.ordwen.service.ReloadService;
 import com.ordwen.util.PluginLogger;
+import com.ordwen.ws.handler.role.LuckPermsSyncManager;
 import com.ordwen.ws.handler.role.RoleSyncUtil;
 import com.ordwen.ws.WSClient;
 import net.luckperms.api.LuckPerms;
@@ -20,8 +21,13 @@ import net.luckperms.api.event.EventBus;
 import net.luckperms.api.event.node.NodeMutateEvent;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ItsMyBotPlugin extends JavaPlugin {
 
@@ -33,6 +39,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
     private WSClient wsClient;
 
     private AutoCloseable nodeMutateSubscription;
+    private LuckPermsSyncManager lpSyncManager;
 
     @Override
     public void onEnable() {
@@ -70,28 +77,19 @@ public class ItsMyBotPlugin extends JavaPlugin {
     }
 
     private void hookLuckPerms() {
-        if (getServer().getPluginManager().getPlugin("LuckPerms") != null) {
+        final Plugin luckPermsPlugin = getServer().getPluginManager().getPlugin("LuckPerms");
+        if (luckPermsPlugin instanceof LuckPerms) {
             final RegisteredServiceProvider<LuckPerms> provider = getServer().getServicesManager().getRegistration(LuckPerms.class);
-            if (provider == null) {
-                PluginLogger.error("LuckPerms provider not found! Please ensure LuckPerms is working correctly.");
-                return;
-            }
 
-            final LuckPerms luckPerms = provider.getProvider();
-            if (luckPerms == null) {
-                PluginLogger.error("LuckPerms provider is null! Please ensure LuckPerms is working correctly.");
-                return;
+            if (provider != null && provider.getProvider() != null) {
+                final LuckPerms luckPerms = provider.getProvider();
+                this.lpSyncManager = new LuckPermsSyncManager(this);
+                lpSyncManager.init(luckPerms);
+            } else {
+                PluginLogger.error("LuckPerms provider unavailable.");
             }
-
-            final EventBus eventBus = luckPerms.getEventBus();
-            this.nodeMutateSubscription = eventBus.subscribe(this, NodeMutateEvent.class, event -> {
-                final Player player = getServer().getPlayer(event.getTarget().getFriendlyName());
-                if (player != null && player.isOnline()) {
-                    RoleSyncUtil.sendRoleSyncUpdate(this, player);
-                }
-            });
         } else {
-            PluginLogger.info("LuckPerms plugin is missing! Server changes will not be synced with Discord until the next player joins.");
+            PluginLogger.info("LuckPerms plugin is missing!");
         }
     }
 
@@ -155,5 +153,9 @@ public class ItsMyBotPlugin extends JavaPlugin {
 
     public Permission getPermission() {
         return permission;
+    }
+
+    public LuckPermsSyncManager getLpSyncManager() {
+        return lpSyncManager;
     }
 }

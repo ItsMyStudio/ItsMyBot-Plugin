@@ -10,10 +10,11 @@ import com.ordwen.util.PluginLogger;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class RoleSyncUtil {
 
@@ -21,7 +22,6 @@ public final class RoleSyncUtil {
     private static final String TYPE_UPDATE = "ROLE_SYNC_UPDATE";
     private static final String TYPE_SUCCESS = "ROLE_SYNC_SUCCESS";
     private static final String TYPE_FAIL = "ROLE_SYNC_FAIL";
-
 
     private RoleSyncUtil() {}
 
@@ -115,15 +115,17 @@ public final class RoleSyncUtil {
         final String uuidStr = message.get("player_uuid").getAsString();
         final OfflinePlayer player = plugin.getServer().getOfflinePlayer(UUID.fromString(uuidStr));
         if (player == null || !player.hasPlayedBefore()) {
-            System.out.println("null ? " + (player == null));
-            if (player != null) {
-                System.out.println("Player has not played before: " + player.getName());
-            }
             PluginLogger.warn("Player not found for SYNC_ROLE: " + uuidStr);
             return;
         }
 
-        applyRoleDelta(perm, player, message, "add", true);
-        applyRoleDelta(perm, player, message, "remove", false);
+        final LuckPermsSyncManager syncManager = plugin.getLpSyncManager();
+        syncManager.suppress(uuid);
+        try {
+            applyRoleDelta(perm, player, message, "add", true);
+            applyRoleDelta(perm, player, message, "remove", false);
+        } finally {
+            syncManager.unsuppress(uuid);
+        }
     }
 }
