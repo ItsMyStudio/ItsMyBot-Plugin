@@ -13,8 +13,10 @@ import com.ordwen.listener.PlayerQuitListener;
 import com.ordwen.service.LogService;
 import com.ordwen.service.ReloadService;
 import com.ordwen.util.PluginLogger;
+import com.ordwen.util.TextFormatter;
 import com.ordwen.ws.handler.role.LuckPermsSyncManager;
 import com.ordwen.ws.WSClient;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.plugin.Plugin;
@@ -34,6 +36,9 @@ public class ItsMyBotPlugin extends JavaPlugin {
     public void onEnable() {
         PluginLogger.info("Enabling plugin...");
 
+        final BukkitAudiences audiences = BukkitAudiences.create(this);
+        TextFormatter.init(audiences);
+
         final FilesManager filesManager = new FilesManager(this);
         filesManager.load();
 
@@ -50,7 +55,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
         getCommand("discord").setExecutor(new DiscordCommand(commandRegistry, reloadService));
         getCommand("discord").setTabCompleter(new DiscordCompleter(commandRegistry));
 
-        rgisterListeners();
+        registerListeners();
         hookLuckPerms();
 
         this.logService = new LogService(this);
@@ -59,7 +64,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
         PluginLogger.info("Plugin has been enabled!");
     }
 
-    private void rgisterListeners() {
+    private void registerListeners() {
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerCommandListener(this), this);

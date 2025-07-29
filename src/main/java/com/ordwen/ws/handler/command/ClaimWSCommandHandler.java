@@ -35,33 +35,33 @@ public class ClaimWSCommandHandler implements WSCommandHandler {
             } else {
                 PluginLogger.warn("CLAIM_SUCCESS response missing 'rewards' array.");
             }
-            player.sendMessage(Messages.CLAIM_SUCCESS.toString());
+            Messages.CLAIM_SUCCESS.send(player);
 
         } else if ("CLAIM_FAIL".equals(type)) {
             final String reason = response.has("reason") ? response.get("reason").getAsString() : "UNKNOWN";
 
             switch (reason) {
                 case "NO_REWARD":
-                    player.sendMessage(Messages.CLAIM_NO_REWARD.toString());
+                    Messages.CLAIM_NO_REWARD.send(player);
                     break;
                 case "NOT_LINKED":
-                    player.sendMessage(Messages.NOT_LINKED.toString());
+                    Messages.NOT_LINKED.send(player);
                     break;
                 default:
                     PluginLogger.error("Unknown claim failure reason: " + reason);
-                    player.sendMessage(Messages.ERROR_OCCURRED.toString());
+                    Messages.ERROR_OCCURRED.send(player);
             }
 
         } else {
             PluginLogger.error("Unexpected response type: " + type);
-            player.sendMessage(Messages.ERROR_OCCURRED.toString());
+            Messages.ERROR_OCCURRED.send(player);
         }
     }
 
     @Override
     public void handleError(Player player, Throwable ex) {
         PluginLogger.error("WebSocket CLAIM error: " + ex.getMessage());
-        player.sendMessage(Messages.ERROR_OCCURRED.toString());
+        Messages.ERROR_OCCURRED.send(player);
     }
 
     private void handleRewards(Player player, JsonArray rewardsJson) {
@@ -69,7 +69,7 @@ public class ClaimWSCommandHandler implements WSCommandHandler {
             final JsonObject rewardObj = element.getAsJsonObject();
 
             if (rewardObj.has("message")) {
-                player.sendMessage(TextFormatter.format(rewardObj.get("message").getAsString()));
+                TextFormatter.send(player, rewardObj.get("message").getAsString());
             }
 
             if (!rewardObj.has("actions")) {
@@ -91,7 +91,7 @@ public class ClaimWSCommandHandler implements WSCommandHandler {
 
                 switch (prefix) {
                     case "message":
-                        player.sendMessage(TextFormatter.format(content));
+                        TextFormatter.send(player, content);
                         break;
                     case "console":
                         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), content);

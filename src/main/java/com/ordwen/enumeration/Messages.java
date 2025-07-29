@@ -4,34 +4,33 @@ import com.ordwen.configuration.essential.Prefix;
 import com.ordwen.file.implementation.MessagesFile;
 import com.ordwen.util.TextFormatter;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-
-import java.util.Map;
 
 public enum Messages {
 
-    PLAYER_ONLY("player_only", "&cThis command can only be executed by a player!"),
-    NO_PERMISSION("no_permission", "&cYou do not have permission to execute this command!"),
+    PLAYER_ONLY("player_only", "<red>This command can only be executed by a player!</red>"),
+    NO_PERMISSION("no_permission", "<red>You do not have permission to execute this command!</red>"),
     PLAYER_HELP("player_help", String.join("\n",
-            "&aPlayer commands:",
-            "&e/discord link &a: link your Discord account",
-            "&e/discord unlink &a: unlink your Discord account",
-            "&e/discord claim &a: claim your Discord rewards"
+            "<green>Player commands:</green>",
+            "<yellow>/discord link <green>: link your Discord account</green>",
+            "<yellow>/discord unlink <green>: unlink your Discord account</green>",
+            "<yellow>/discord claim <green>: claim your Discord rewards</green>"
     )),
     ADMIN_HELP("admin_help", String.join("\n",
-            "&aAdmin commands:",
-            "&e/discord reload &a: reload the plugin configuration"
+            "<green>Admin commands:</green>",
+            "<yellow>/discord reload <green>: reload the plugin configuration</green>"
     )),
-    ERROR_OCCURRED("error_occurred", "&cAn error occurred while processing your request. Please contact support."),
-    LINK_SUCCESS("link_success", "&aYour Discord account has been successfully linked!"),
-    UNLINK_SUCCESS("unlink_success", "&aYour Discord account has been successfully unlinked!"),
-    ALREADY_LINKED("already_linked", "&cYour Discord account is already linked!"),
-    NOT_LINKED("not_linked", "&cYou have not linked your Discord account yet! Use &e/discord link &cto link it."),
-    INVALID_CODE("invalid_code", "&cThe code you provided is invalid! Please try again."),
-    CLAIM_SUCCESS("claim_success", "&aYou have successfully claimed your Discord rewards!"),
-    CLAIM_NO_REWARD("claim_no_reward", "&cYou have no rewards to claim at this time."),
-    PLUGIN_RELOADED("plugin_reloaded", "&ePlugin reloaded. Please check the console for any errors."),
-    SYNC_ERROR_UNKNOWN_ROLE("sync_error_unknown_role", "&cAn error occurred while syncing roles. Unknown role detected. Please contact support.")
+    ERROR_OCCURRED("error_occurred", "<red>An error occurred while processing your request. Please contact support.</red>"),
+    LINK_SUCCESS("link_success", "<green>Your Discord account has been successfully linked!</green>"),
+    UNLINK_SUCCESS("unlink_success", "<green>Your Discord account has been successfully unlinked!</green>"),
+    ALREADY_LINKED("already_linked", "<red>Your Discord account is already linked!</red>"),
+    NOT_LINKED("not_linked", "<red>You have not linked your Discord account yet!</red> <yellow>Use</yellow> <yellow>/discord link</yellow> <red>to link it.</red>"),
+    INVALID_CODE("invalid_code", "<red>The code you provided is invalid! Please try again.</red>"),
+    CLAIM_SUCCESS("claim_success", "<green>You have successfully claimed your Discord rewards!</green>"),
+    CLAIM_NO_REWARD("claim_no_reward", "<red>You have no rewards to claim at this time.</red>"),
+    PLUGIN_RELOADED("plugin_reloaded", "<yellow>Plugin reloaded. Please check the console for any errors.</yellow>")
+
     ;
 
     private final String path;
@@ -42,40 +41,25 @@ public enum Messages {
         this.defaultMessage = message;
     }
 
-    @Override
-    public String toString() {
+    public void send(CommandSender sender) {
         String msg = MessagesFile.getInstance().get(this.path, defaultMessage);
 
-        if (msg.trim().isEmpty()) return "";
-        else return TextFormatter.format(null, Prefix.getPrefix() + msg);
-    }
-
-    public String getMessage(Player player) {
-        String msg = MessagesFile.getInstance().get(this.path, defaultMessage);
-
-        if (msg.trim().isEmpty()) return null;
-        else return TextFormatter.format(player, Prefix.getPrefix() + msg);
-    }
-
-    public String getMessage(String playerName) {
-        final Player player = Bukkit.getPlayer(playerName);
-        if (player == null) return null;
-
-        String msg = MessagesFile.getInstance().get(this.path, defaultMessage);
-        if (msg.trim().isEmpty()) return null;
-
-        else return TextFormatter.format(player, Prefix.getPrefix() + msg);
-    }
-
-    public String getMessage(Player player, Map<String, String> placeholders) {
-        String msg = MessagesFile.getInstance().get(this.path, defaultMessage);
-        if (msg.trim().isEmpty()) return null;
-
-        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-            msg = msg.replace(entry.getKey(), entry.getValue());
+        if (msg != null && !msg.trim().isEmpty()) {
+            if (sender instanceof Player) {
+                final Player player = (Player) sender;
+                TextFormatter.send(player, Prefix.getPrefix() + msg);
+            } else {
+                Bukkit.getConsoleSender().sendMessage(TextFormatter.legacy(Prefix.getPrefix() + msg));
+            }
         }
+    }
 
-        return TextFormatter.format(player, Prefix.getPrefix() + msg);
+    public void send(Player player) {
+        String msg = MessagesFile.getInstance().get(this.path, defaultMessage);
+
+        if (!msg.trim().isEmpty()) {
+            TextFormatter.send(player, Prefix.getPrefix() + msg);
+        }
     }
 
     /**

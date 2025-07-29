@@ -1,7 +1,10 @@
 package com.ordwen.util;
 
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.md_5.bungee.api.ChatColor;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Player;
 
 public class TextFormatter {
@@ -9,45 +12,47 @@ public class TextFormatter {
     private TextFormatter() {
     }
 
-    /**
-     * Format a message, replacing color codes.
-     *
-     * @param message message to format
-     */
-    public static String format(String message) {
-        if (message == null) return null;
-        return replaceAll(message);
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
+    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.builder().character('&').hexColors().build();
+
+    private static BukkitAudiences audiences;
+
+    public static void init(BukkitAudiences audiencesInstance) {
+        audiences = audiencesInstance;
+    }
+
+    public static void send(Player player, String rawMessage) {
+        if (rawMessage == null || audiences == null) return;
+
+        final String withPlaceholders = PluginUtils.isPluginEnabled("PlaceholderAPI")
+                ? PlaceholderAPI.setPlaceholders(player, rawMessage)
+                : rawMessage;
+
+        final Component component = MINI_MESSAGE.deserialize(withPlaceholders);
+        audiences.player(player).sendMessage(component);
     }
 
     /**
      * Format a message for a player, replacing placeholders and color codes.
      *
-     * @param player  player
-     * @param message message to format
-     * @return formatted message
+     * @param player     player
+     * @param rawMessage message to format
+     * @return formatted message Component
      */
-    public static String format(Player player, String message) {
+    public static Component format(Player player, String rawMessage) {
+        if (rawMessage == null) return Component.empty();
+
+        final String withPlaceholders = PluginUtils.isPluginEnabled("PlaceholderAPI")
+                ? PlaceholderAPI.setPlaceholders(player, rawMessage)
+                : rawMessage;
+
+        return MINI_MESSAGE.deserialize(withPlaceholders);
+    }
+
+    public static String legacy(String message) {
         if (message == null) return null;
 
-        if (PluginUtils.isPluginEnabled("PlaceholderAPI")) {
-            message = PlaceholderAPI.setPlaceholders(player, message);
-        }
-
-        message = replaceAll(message);
-
-        return message;
+        final Component component = MiniMessage.miniMessage().deserialize(message);
+        return LegacyComponentSerializer.legacySection().serialize(component);
     }
-
-    /**
-     * Apply color codes to a message.
-     *
-     * @param message message to apply color codes to
-     * @return message with color codes applied
-     */
-    private static String replaceAll(String message) {
-        message = ChatColor.translateAlternateColorCodes('&', message);
-        return message;
-    }
-
-    // TO DO: MiniMessage support
 }

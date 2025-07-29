@@ -24,24 +24,24 @@ public class UnlinkWSCommandHandler implements WSCommandHandler {
     public void handleResponse(Player player, JsonObject response) {
         final String type = response.get("type").getAsString();
         if ("UNLINK_SUCCESS".equals(type)) {
-            player.sendMessage(Messages.UNLINK_SUCCESS.toString());
+            Messages.UNLINK_SUCCESS.send(player);
         } else if ("UNLINK_FAIL".equals(type)) {
             final String reason = response.get("reason").getAsString();
             if ("NOT_LINKED".equals(reason)) {
-                player.sendMessage(Messages.NOT_LINKED.toString());
+                Messages.NOT_LINKED.send(player);
             } else {
-                player.sendMessage(Messages.ERROR_OCCURRED.toString());
+                Messages.ERROR_OCCURRED.send(player);
                 PluginLogger.error("Unlink failed: " + reason + " for player " + player.getName());
             }
         } else {
             player.sendMessage("Unexpected response type: " + type);
-            player.sendMessage(Messages.ERROR_OCCURRED.toString());
+            Messages.ERROR_OCCURRED.send(player);
         }
     }
 
     @Override
     public void handleError(Player player, Throwable ex) {
         PluginLogger.error("WebSocket UNLINK error: " + ex.getMessage());
-        player.sendMessage(Messages.ERROR_OCCURRED.toString());
+        Messages.ERROR_OCCURRED.send(player);
     }
 }

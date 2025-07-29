@@ -21,17 +21,18 @@ public class DiscordCommand extends CommandMessage implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            if (args.length >= 1 && "reload".equalsIgnoreCase(args[0])) {
-                if (sender.hasPermission(Permissions.RELOAD.get())) {
-                    reloadService.reload();
-                    sender.sendMessage(Messages.PLUGIN_RELOADED.toString());
-                } else {
-                    noPermission(sender);
-                }
+        if (args.length >= 1 && "reload".equalsIgnoreCase(args[0])) {
+            if (sender.hasPermission(Permissions.RELOAD.get())) {
+                reloadService.reload();
+                Messages.PLUGIN_RELOADED.send(sender);
             } else {
-                playerOnly(sender);
+                noPermission(sender);
             }
+            return true;
+        }
+
+        if (!(sender instanceof Player)) {
+            playerOnly(sender);
             return true;
         }
 

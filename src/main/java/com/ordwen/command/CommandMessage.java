@@ -11,8 +11,7 @@ public class CommandMessage {
      * @param sender the sender.
      */
     protected void help(CommandSender sender) {
-        final String msg = Messages.PLAYER_HELP.toString();
-        if (msg != null) sender.sendMessage(msg);
+        Messages.PLAYER_HELP.send(sender);
     }
 
     /**
@@ -21,8 +20,7 @@ public class CommandMessage {
      * @param sender the sender.
      */
     protected void noPermission(CommandSender sender) {
-        final String msg = Messages.NO_PERMISSION.toString();
-        if (msg != null) sender.sendMessage(msg);
+        Messages.NO_PERMISSION.send(sender);
     }
 
     /**
@@ -31,7 +29,6 @@ public class CommandMessage {
      * @param sender the sender.
      */
     protected void playerOnly(CommandSender sender) {
-        final String msg = Messages.PLAYER_ONLY.toString();
-        if (msg != null) sender.sendMessage(msg);
+        Messages.PLAYER_ONLY.send(sender);
     }
 }

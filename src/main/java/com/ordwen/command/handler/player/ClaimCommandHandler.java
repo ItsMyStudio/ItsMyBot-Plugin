@@ -29,7 +29,7 @@ public class ClaimCommandHandler extends CommandHandlerBase {
     @Override
     public void execute(Player player, String[] args) {
         if (args.length > 1) {
-            player.sendMessage(Messages.PLAYER_HELP.toString());
+            Messages.PLAYER_HELP.send(player);
             return;
         }
 

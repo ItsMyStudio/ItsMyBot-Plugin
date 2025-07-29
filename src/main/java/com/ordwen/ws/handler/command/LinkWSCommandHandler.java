@@ -26,29 +26,29 @@ public class LinkWSCommandHandler implements WSCommandHandler {
     public void handleResponse(Player player, JsonObject response) {
         final String type = response.get("type").getAsString();
         if ("LINK_SUCCESS".equals(type)) {
-            player.sendMessage(Messages.LINK_SUCCESS.toString());
+           Messages.LINK_SUCCESS.send(player);
         } else if ("LINK_FAIL".equals(type)) {
             final String reason = response.get("reason").getAsString();
             switch (reason) {
                 case "INVALID_CODE":
-                    player.sendMessage(Messages.INVALID_CODE.toString());
+                   Messages.INVALID_CODE.send(player);
                     break;
                 case "ALREADY_LINKED":
-                    player.sendMessage(Messages.ALREADY_LINKED.toString());
+                   Messages.ALREADY_LINKED.send(player);
                     break;
                 default:
                     PluginLogger.error("Unknown failure reason: " + reason);
-                    player.sendMessage(Messages.ERROR_OCCURRED.toString());
+                   Messages.ERROR_OCCURRED.send(player);
             }
         } else {
             PluginLogger.error("Unexpected response type: " + type);
-            player.sendMessage(Messages.ERROR_OCCURRED.toString());
+           Messages.ERROR_OCCURRED.send(player);
         }
     }
 
     @Override
     public void handleError(Player player, Throwable ex) {
         PluginLogger.error("WebSocket LINK error: " + ex.getMessage());
-        player.sendMessage(Messages.ERROR_OCCURRED.toString());
+       Messages.ERROR_OCCURRED.send(player);
     }
 }
