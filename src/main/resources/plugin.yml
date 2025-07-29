@@ -9,10 +9,11 @@ softdepend:
 
 commands:
   discord:
-    description: default command
-    aliases:
-      - itsmybot
-      - imb
+    description: Manage your Discord account
+  link:
+    description: Link your Discord account
+  unlink:
+    description: Unlink your Discord account
 
 permissions:
   itsmybot.link:

@@ -18,7 +18,7 @@ public class LinkWSCommandHandler implements WSCommandHandler {
         request.addProperty("type", getType());
         request.addProperty("player_uuid", player.getUniqueId().toString());
         request.addProperty("player_name", player.getName());
-        request.addProperty("code", args[1]);
+        request.addProperty("code", args[0]);
         return request;
     }
 

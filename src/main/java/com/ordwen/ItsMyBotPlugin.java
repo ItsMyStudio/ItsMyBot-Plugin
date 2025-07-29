@@ -3,6 +3,8 @@ package com.ordwen;
 import com.ordwen.command.DiscordCommand;
 import com.ordwen.command.CommandRegistry;
 import com.ordwen.command.DiscordCompleter;
+import com.ordwen.command.handler.LinkCommand;
+import com.ordwen.command.handler.UnlinkCommand;
 import com.ordwen.command.handler.player.ClaimCommandHandler;
 import com.ordwen.command.handler.player.LinkCommandHandler;
 import com.ordwen.command.handler.player.UnlinkCommandHandler;
@@ -48,9 +50,13 @@ public class ItsMyBotPlugin extends JavaPlugin {
         setupPermissions();
 
         final CommandRegistry commandRegistry = new CommandRegistry();
-        commandRegistry.registerCommand(new LinkCommandHandler(this));
-        commandRegistry.registerCommand(new UnlinkCommandHandler(this));
         commandRegistry.registerCommand(new ClaimCommandHandler(this));
+
+        final LinkCommandHandler linkCommandHandler = new LinkCommandHandler(this);
+        getCommand("link").setExecutor(new LinkCommand(linkCommandHandler));
+
+        final UnlinkCommandHandler unlinkCommandHandler = new UnlinkCommandHandler(this);
+        getCommand("unlink").setExecutor(new UnlinkCommand(unlinkCommandHandler));
 
         getCommand("discord").setExecutor(new DiscordCommand(commandRegistry, reloadService));
         getCommand("discord").setTabCompleter(new DiscordCompleter(commandRegistry));

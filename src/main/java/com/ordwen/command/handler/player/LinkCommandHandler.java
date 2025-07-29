@@ -28,7 +28,7 @@ public class LinkCommandHandler extends CommandHandlerBase {
 
     @Override
     public void execute(Player player, String[] args) {
-        if (args.length < 2 || args[1].trim().isEmpty()) {
+        if (args.length < 1 || args[0].trim().isEmpty()) {
             Messages.PLAYER_HELP.send(player);
             return;
         }
