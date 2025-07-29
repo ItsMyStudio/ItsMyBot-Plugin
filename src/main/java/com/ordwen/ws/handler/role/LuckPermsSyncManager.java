@@ -1,20 +1,21 @@
 package com.ordwen.ws.handler.role;
 
-import com.google.gson.JsonObject;
 import com.ordwen.ItsMyBotPlugin;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.event.node.NodeMutateEvent;
-import org.bukkit.OfflinePlayer;
+import net.luckperms.api.node.Node;
+import net.luckperms.api.node.types.InheritanceNode;
 import org.bukkit.entity.Player;
 
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class LuckPermsSyncManager {
 
     private final ItsMyBotPlugin plugin;
-    private final Set<UUID> suppressedSyncs = ConcurrentHashMap.newKeySet();
+
+    private final Map<UUID, Map<String, RoleChangeEvent.Action>> expectedMutations = new ConcurrentHashMap<>();
 
     public LuckPermsSyncManager(ItsMyBotPlugin plugin) {
         this.plugin = plugin;
@@ -26,29 +27,65 @@ public class LuckPermsSyncManager {
 
     private void onNodeMutate(NodeMutateEvent event) {
         final String name = event.getTarget().getFriendlyName();
-        if (name == null || name.isEmpty()) return;
+        if (name.isEmpty()) return;
 
-        final Player targetPlayer = plugin.getServer().getPlayer(name);
-        if (targetPlayer == null || !targetPlayer.isOnline()) return;
+        final Player player = plugin.getServer().getPlayer(name);
+        if (player == null || !player.isOnline()) return;
 
-        final UUID uuid = targetPlayer.getUniqueId();
-        if (suppressedSyncs.contains(uuid)) return;
+        final UUID uuid = player.getUniqueId();
 
-        final Player player = plugin.getServer().getPlayer(event.getTarget().getFriendlyName());
-        if (player != null && player.isOnline()) {
+        final Set<String> added = getGroupNames(event.getDataAfter());
+        final Set<String> removed = getGroupNames(event.getDataBefore());
+        final Set<String> actuallyAdded = new HashSet<>(added);
+        final Set<String> actuallyRemoved = new HashSet<>(removed);
+
+        actuallyAdded.removeAll(removed);
+        actuallyRemoved.removeAll(added);
+
+        boolean hasUntrackedMutation = false;
+
+        for (String group : actuallyAdded) {
+            if (!consumeExpected(uuid, group, RoleChangeEvent.Action.ADD)) {
+                hasUntrackedMutation = true;
+            }
+        }
+
+        for (String group : actuallyRemoved) {
+            if (!consumeExpected(uuid, group, RoleChangeEvent.Action.REMOVE)) {
+                hasUntrackedMutation = true;
+            }
+        }
+
+        if (hasUntrackedMutation) {
             RoleSyncUtil.sendRoleSyncUpdate(plugin, player);
         }
     }
 
-    public void suppress(UUID uuid) {
-        suppressedSyncs.add(uuid);
+    private Set<String> getGroupNames(Collection<? extends Node> nodes) {
+        return nodes.stream()
+                .filter(InheritanceNode.class::isInstance)
+                .map(node -> ((InheritanceNode) node).getGroupName())
+                .collect(Collectors.toSet());
     }
 
-    public void unsuppress(UUID uuid) {
-        suppressedSyncs.remove(uuid);
+    public void registerExpectedMutation(UUID uuid, String group, RoleChangeEvent.Action action) {
+        expectedMutations
+                .computeIfAbsent(uuid, u -> new ConcurrentHashMap<>())
+                .put(group.toLowerCase(), action);
     }
 
-    public boolean isSuppressed(UUID uuid) {
-        return suppressedSyncs.contains(uuid);
+    private boolean consumeExpected(UUID uuid, String group, RoleChangeEvent.Action action) {
+        final Map<String, RoleChangeEvent.Action> map = expectedMutations.get(uuid);
+        if (map == null) return false;
+
+        final RoleChangeEvent.Action expected = map.get(group.toLowerCase());
+        if (expected == action) {
+            map.remove(group.toLowerCase());
+            if (map.isEmpty()) {
+                expectedMutations.remove(uuid);
+            }
+            return true;
+        }
+        return false;
     }
 }

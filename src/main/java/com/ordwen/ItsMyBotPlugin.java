@@ -14,20 +14,12 @@ import com.ordwen.service.LogService;
 import com.ordwen.service.ReloadService;
 import com.ordwen.util.PluginLogger;
 import com.ordwen.ws.handler.role.LuckPermsSyncManager;
-import com.ordwen.ws.handler.role.RoleSyncUtil;
 import com.ordwen.ws.WSClient;
 import net.luckperms.api.LuckPerms;
-import net.luckperms.api.event.EventBus;
-import net.luckperms.api.event.node.NodeMutateEvent;
 import net.milkbowl.vault.permission.Permission;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class ItsMyBotPlugin extends JavaPlugin {
 
@@ -78,18 +70,19 @@ public class ItsMyBotPlugin extends JavaPlugin {
 
     private void hookLuckPerms() {
         final Plugin luckPermsPlugin = getServer().getPluginManager().getPlugin("LuckPerms");
-        if (luckPermsPlugin instanceof LuckPerms) {
-            final RegisteredServiceProvider<LuckPerms> provider = getServer().getServicesManager().getRegistration(LuckPerms.class);
 
-            if (provider != null && provider.getProvider() != null) {
-                final LuckPerms luckPerms = provider.getProvider();
-                this.lpSyncManager = new LuckPermsSyncManager(this);
-                lpSyncManager.init(luckPerms);
-            } else {
-                PluginLogger.error("LuckPerms provider unavailable.");
-            }
-        } else {
+        if (luckPermsPlugin == null) {
             PluginLogger.info("LuckPerms plugin is missing!");
+            return;
+        }
+
+        final RegisteredServiceProvider<LuckPerms> provider = getServer().getServicesManager().getRegistration(LuckPerms.class);
+        if (provider != null && provider.getProvider() != null) {
+            final LuckPerms luckPerms = provider.getProvider();
+            this.lpSyncManager = new LuckPermsSyncManager(this);
+            lpSyncManager.init(luckPerms);
+        } else {
+            PluginLogger.error("LuckPerms provider unavailable.");
         }
     }
 

@@ -112,9 +112,10 @@ public class WSClient extends WebSocketListener {
                 handled = true;
                 break;
             case "SYNC_ROLE":
-                System.out.println("Received role sync request: " + text);
                 RoleSyncUtil.handleSyncRole(plugin, json);
                 handled = true;
+                break;
+            default:
                 break;
         }
 

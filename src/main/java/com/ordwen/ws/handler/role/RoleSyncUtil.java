@@ -11,10 +11,7 @@ import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
-import java.util.Arrays;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 
 public final class RoleSyncUtil {
 
@@ -64,12 +61,10 @@ public final class RoleSyncUtil {
         final Permission perm = plugin.getPermission();
         if (perm == null) return;
 
-        System.out.println("Handling role sync response: " + response);
-
         final String responseType = response.get("type").getAsString();
         switch (responseType) {
             case TYPE_SUCCESS:
-                applyRoleChanges(perm, player, response);
+                applyRoleChanges(plugin, player, response);
                 break;
             case TYPE_FAIL:
                 logRoleSyncFailure(player, response);
@@ -79,24 +74,35 @@ public final class RoleSyncUtil {
         }
     }
 
-    private static void applyRoleChanges(Permission perm, OfflinePlayer player, JsonObject response) {
-        applyRoleDelta(perm, player, response, "add", true);
-        applyRoleDelta(perm, player, response, "remove", false);
+    private static void applyRoleChanges(ItsMyBotPlugin plugin, OfflinePlayer player, JsonObject response) {
+        final Permission perm = plugin.getPermission();
+        if (perm == null) return;
+
+        final UUID uuid = player.getUniqueId();
+        final List<String> toAdd = extractStringList(response, "add");
+        final List<String> toRemove = extractStringList(response, "remove");
+
+        final LuckPermsSyncManager syncManager = plugin.getLpSyncManager();
+        registerExpectedMutations(player, perm, uuid, toAdd, toRemove, syncManager);
     }
 
-    private static void applyRoleDelta(Permission perm, OfflinePlayer player, JsonObject json, String key, boolean add) {
-        System.out.println("Applying role delta: " + key + " for player: " + player.getName());
-        if (!json.has(key)) {
-            System.out.println("No roles to " + (add ? "add" : "remove") + " for player: " + player.getName());
-            return;
+    private static void registerExpectedMutations(OfflinePlayer player, Permission perm, UUID uuid, List<String> toAdd, List<String> toRemove, LuckPermsSyncManager syncManager) {
+        for (String role : toAdd) {
+            syncManager.registerExpectedMutation(uuid, role, RoleChangeEvent.Action.ADD);
         }
-        for (JsonElement e : json.getAsJsonArray(key)) {
-            final String role = e.getAsString();
+        for (String role : toRemove) {
+            syncManager.registerExpectedMutation(uuid, role, RoleChangeEvent.Action.REMOVE);
+        }
+
+        applyRoleDelta(perm, player, toAdd, true);
+        applyRoleDelta(perm, player, toRemove, false);
+    }
+
+    private static void applyRoleDelta(Permission perm, OfflinePlayer player, List<String> roles, boolean add) {
+        for (String role : roles) {
             if (add) {
-                System.out.println("Adding role: " + role + " to player: " + player.getName());
                 perm.playerAddGroup("global", player, role);
             } else {
-                System.out.println("Removing role: " + role + " from player: " + player.getName());
                 perm.playerRemoveGroup("global", player, role);
             }
         }
@@ -111,21 +117,27 @@ public final class RoleSyncUtil {
         final Permission perm = plugin.getPermission();
         if (perm == null) return;
 
-        System.out.println("Handling SYNC_ROLE message: " + message);
-        final String uuidStr = message.get("player_uuid").getAsString();
-        final OfflinePlayer player = plugin.getServer().getOfflinePlayer(UUID.fromString(uuidStr));
+        final UUID uuid = UUID.fromString(message.get("player_uuid").getAsString());
+        final OfflinePlayer player = plugin.getServer().getOfflinePlayer(uuid);
         if (player == null || !player.hasPlayedBefore()) {
-            PluginLogger.warn("Player not found for SYNC_ROLE: " + uuidStr);
             return;
         }
 
         final LuckPermsSyncManager syncManager = plugin.getLpSyncManager();
-        syncManager.suppress(uuid);
-        try {
-            applyRoleDelta(perm, player, message, "add", true);
-            applyRoleDelta(perm, player, message, "remove", false);
-        } finally {
-            syncManager.unsuppress(uuid);
+
+        final List<String> toAdd = extractStringList(message, "add");
+        final List<String> toRemove = extractStringList(message, "remove");
+
+        registerExpectedMutations(player, perm, uuid, toAdd, toRemove, syncManager);
+    }
+
+    private static List<String> extractStringList(JsonObject json, String key) {
+        if (!json.has(key)) return Collections.emptyList();
+        final JsonArray array = json.getAsJsonArray(key);
+        final List<String> result = new ArrayList<>(array.size());
+        for (JsonElement e : array) {
+            result.add(e.getAsString());
         }
+        return result;
     }
 }
