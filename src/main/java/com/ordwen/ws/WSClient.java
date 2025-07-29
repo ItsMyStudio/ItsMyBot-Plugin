@@ -32,13 +32,19 @@ public class WSClient extends WebSocketListener {
 
     private WebSocket webSocket;
     private final OkHttpClient client;
+    private ScheduledFuture<?> reconnectTask;
+    private volatile boolean shouldReconnect;
 
     public WSClient(ItsMyBotPlugin plugin) {
         this.plugin = plugin;
         this.client = createClientAllowingSelfSigned();
+        this.shouldReconnect = false;
     }
 
     public void connect() {
+        shouldReconnect = true;
+        cancelReconnect();
+
         if (webSocket != null) {
             webSocket.close(1000, "Reconnecting");
         }
@@ -64,6 +70,9 @@ public class WSClient extends WebSocketListener {
     }
 
     public void disconnect() {
+        shouldReconnect = false;
+        cancelReconnect();
+
         if (webSocket != null) {
             webSocket.cancel();
             webSocket = null;
@@ -75,6 +84,8 @@ public class WSClient extends WebSocketListener {
             scheduler.shutdownNow();
         }
 
+        cancelReconnect();
+
         if (client != null) {
             client.dispatcher().executorService().shutdownNow();
             client.connectionPool().evictAll();
@@ -84,6 +95,9 @@ public class WSClient extends WebSocketListener {
     @Override
     public void onOpen(WebSocket webSocket, @NotNull Response response) {
         this.webSocket = webSocket;
+        cancelReconnect();
+
+        PluginLogger.info("WebSocket connection established.");
 
         final String token = JWT.create()
                 .withClaim("server_id", WSConfig.getServerId())
@@ -146,11 +160,13 @@ public class WSClient extends WebSocketListener {
 
     @Override
     public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
-        PluginLogger.warn("Failed to communicate with WS server. Details: " + t.getMessage());
-        PluginLogger.warn("If this is happening on reload, you can ignore this message.");
-        if (response != null) {
-            PluginLogger.error("Response: " + response.message());
-        }
+        //PluginLogger.warn("Failed to communicate with WS server. Details: " + t.getMessage());
+        //PluginLogger.warn("If this is happening on reload, you can ignore this message.");
+        //if (response != null) {
+        //    PluginLogger.error("Response: " + response.message());
+        //}
+
+        scheduleReconnect();
     }
 
     @Override
@@ -174,6 +190,7 @@ public class WSClient extends WebSocketListener {
         }
 
         PluginLogger.warn(str);
+        scheduleReconnect();
     }
 
     public void sendMessage(String json) {
@@ -243,5 +260,23 @@ public class WSClient extends WebSocketListener {
         future.whenComplete((res, ex) -> pendingRequests.remove(id));
 
         return future;
+    }
+
+    private synchronized void scheduleReconnect() {
+        if (!shouldReconnect) {
+            return;
+        }
+        if (reconnectTask != null && !reconnectTask.isDone()) {
+            return;
+        }
+        PluginLogger.warn("Failed to connect to WebSocket server. Reconnecting in 30 seconds...");
+        reconnectTask = scheduler.scheduleAtFixedRate(this::connect, 30, 30, TimeUnit.SECONDS);
+    }
+
+    private synchronized void cancelReconnect() {
+        if (reconnectTask != null) {
+            reconnectTask.cancel(false);
+            reconnectTask = null;
+        }
     }
 }

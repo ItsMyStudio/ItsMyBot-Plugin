@@ -38,4 +38,13 @@ public class CommandRegistry {
         final String key = name.toLowerCase();
         return handlers.get(key);
     }
+
+    /**
+     * Gets a collection of all registered player command handlers.
+     *
+     * @return a collection of subcommand names to their handlers
+     */
+    public Collection<CommandHandlerBase> getCommandHandlers() {
+        return handlers.values();
+    }
 }

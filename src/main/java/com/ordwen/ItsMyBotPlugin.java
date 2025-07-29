@@ -2,6 +2,7 @@ package com.ordwen;
 
 import com.ordwen.command.DiscordCommand;
 import com.ordwen.command.CommandRegistry;
+import com.ordwen.command.DiscordCompleter;
 import com.ordwen.command.handler.player.ClaimCommandHandler;
 import com.ordwen.command.handler.player.LinkCommandHandler;
 import com.ordwen.command.handler.player.UnlinkCommandHandler;
@@ -47,6 +48,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
         commandRegistry.registerCommand(new ClaimCommandHandler(this));
 
         getCommand("discord").setExecutor(new DiscordCommand(commandRegistry, reloadService));
+        getCommand("discord").setTabCompleter(new DiscordCompleter(commandRegistry));
 
         rgisterListeners();
         hookLuckPerms();
