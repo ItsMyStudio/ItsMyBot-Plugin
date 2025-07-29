@@ -2,7 +2,6 @@ package com.ordwen;
 
 import com.ordwen.command.DiscordCommand;
 import com.ordwen.command.CommandRegistry;
-import com.ordwen.command.handler.admin.ReloadCommandHandler;
 import com.ordwen.command.handler.player.ClaimCommandHandler;
 import com.ordwen.command.handler.player.LinkCommandHandler;
 import com.ordwen.command.handler.player.UnlinkCommandHandler;
@@ -23,24 +22,21 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class ItsMyBotPlugin extends JavaPlugin {
 
-    private FilesManager filesManager;
-    private ReloadService reloadService;
     private LogService logService;
 
     private Permission permission;
     private WSClient wsClient;
 
-    private AutoCloseable nodeMutateSubscription;
     private LuckPermsSyncManager lpSyncManager;
 
     @Override
     public void onEnable() {
         PluginLogger.info("Enabling plugin...");
 
-        this.filesManager = new FilesManager(this);
+        final FilesManager filesManager = new FilesManager(this);
         filesManager.load();
 
-        this.reloadService = new ReloadService(this);
+        final ReloadService reloadService = new ReloadService(this);
         reloadService.reload();
 
         setupPermissions();
@@ -49,9 +45,8 @@ public class ItsMyBotPlugin extends JavaPlugin {
         commandRegistry.registerCommand(new LinkCommandHandler(this));
         commandRegistry.registerCommand(new UnlinkCommandHandler(this));
         commandRegistry.registerCommand(new ClaimCommandHandler(this));
-        commandRegistry.registerCommand(new ReloadCommandHandler(reloadService));
 
-        getCommand("discord").setExecutor(new DiscordCommand(commandRegistry));
+        getCommand("discord").setExecutor(new DiscordCommand(commandRegistry, reloadService));
 
         rgisterListeners();
         hookLuckPerms();
@@ -91,14 +86,6 @@ public class ItsMyBotPlugin extends JavaPlugin {
         PluginLogger.info("Plugin is shutting down...");
         logService.logServerStop();
 
-        if (nodeMutateSubscription != null) {
-            try {
-                nodeMutateSubscription.close();
-            } catch (Exception e) {
-                PluginLogger.error("Failed to unsubscribe from LuckPerms events" + e.getMessage());
-            }
-        }
-
         if (wsClient != null) {
             wsClient.disconnect();
             wsClient.shutdown();
@@ -132,13 +119,6 @@ public class ItsMyBotPlugin extends JavaPlugin {
         }
     }
 
-    public FilesManager getFilesManager() {
-        return filesManager;
-    }
-
-    public ReloadService getReloadService() {
-        return reloadService;
-    }
 
     public LogService getLogService() {
         return logService;
