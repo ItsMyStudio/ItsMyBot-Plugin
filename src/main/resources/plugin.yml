@@ -6,6 +6,7 @@ api-version: 1.8
 softdepend:
   - Vault
   - LuckPerms
+  - PlaceholderAPI
 
 commands:
   discord:
@@ -21,6 +22,9 @@ permissions:
     default: true
   itsmybot.unlink:
     description: 'Allows the player to unlink their Discord account'
+    default: true
+  itsmybot.claim:
+    description: 'Allows the player to claim their Discord rewards'
     default: true
   itsmybot.reload:
     description: 'Allows the player to reload the plugin configuration'
