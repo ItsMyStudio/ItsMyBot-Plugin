@@ -13,8 +13,6 @@ public class TextFormatter {
     }
 
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
-    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.builder().character('&').hexColors().build();
-
     private static BukkitAudiences audiences;
 
     public static void init(BukkitAudiences audiencesInstance) {
