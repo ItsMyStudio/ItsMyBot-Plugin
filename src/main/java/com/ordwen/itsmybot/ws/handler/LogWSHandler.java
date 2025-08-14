@@ -2,6 +2,7 @@ package com.ordwen.itsmybot.ws.handler;
 
 import com.google.gson.JsonObject;
 import com.ordwen.itsmybot.ItsMyBotPlugin;
+import com.ordwen.itsmybot.configuration.essential.WSConfig;
 import com.ordwen.itsmybot.enumeration.LogType;
 import com.ordwen.itsmybot.util.PluginLogger;
 import com.ordwen.itsmybot.ws.handler.command.WSCommandHandler;
@@ -38,6 +39,7 @@ public class LogWSHandler implements WSCommandHandler {
      */
     public void sendLog(ItsMyBotPlugin plugin, LogType logType, @Nullable UUID playerUuid, @Nullable String playerName, JsonObject details) {
         final JsonObject message = new JsonObject();
+        message.addProperty("server_id", WSConfig.getServerId());
         message.addProperty("type", getType());
         message.addProperty("log_type", logType.name());
         message.addProperty("timestamp", Instant.now().toString());
