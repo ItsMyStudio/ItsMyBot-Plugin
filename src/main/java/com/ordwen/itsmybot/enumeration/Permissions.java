@@ -2,6 +2,7 @@ package com.ordwen.itsmybot.enumeration;
 
 public enum Permissions {
 
+    USE("itsmybot.use"),
     LINK("itsmybot.link"),
     UNLINK("itsmybot.unlink"),
     CLAIM("itsmybot.claim"),

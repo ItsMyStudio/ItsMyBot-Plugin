@@ -13,6 +13,7 @@ public enum Messages {
     NO_PERMISSION("no_permission", "<red>You do not have permission to execute this command!</red>"),
     PLAYER_HELP("player_help", String.join("\n",
             "<green>Player commands:</green>",
+            "<yellow>/discord <green>: show the Discord link</green>",
             "<yellow>/link <green>: link your Discord account</green>",
             "<yellow>/unlink <green>: unlink your Discord account</green>",
             "<yellow>/discord claim <green>: claim your Discord rewards</green>"
@@ -26,10 +27,12 @@ public enum Messages {
     UNLINK_SUCCESS("unlink_success", "<green>Your Discord account has been successfully unlinked!</green>"),
     ALREADY_LINKED("already_linked", "<red>Your Discord account is already linked!</red>"),
     NOT_LINKED("not_linked", "<red>You have not linked your Discord account yet!</red> <yellow>Use</yellow> <yellow>/link</yellow> <red>to link it.</red>"),
+    CODE_REQUIRED("code_required", "<red>You must provide a code to link your Discord account!</red>"),
     INVALID_CODE("invalid_code", "<red>The code you provided is invalid! Please try again.</red>"),
     CLAIM_SUCCESS("claim_success", "<green>You have successfully claimed your Discord rewards!</green>"),
     CLAIM_NO_REWARD("claim_no_reward", "<red>You have no rewards to claim at this time.</red>"),
-    PLUGIN_RELOADED("plugin_reloaded", "<yellow>Plugin reloaded. Please check the console for any errors.</yellow>")
+    PLUGIN_RELOADED("plugin_reloaded", "<yellow>Plugin reloaded. Please check the console for any errors.</yellow>"),
+    JOIN_DISCORD("join_discord", "<green>Join our Discord server to get advantages and link your account: <blue>https://discord.gg/yourserver</blue></green>")
 
     ;
 

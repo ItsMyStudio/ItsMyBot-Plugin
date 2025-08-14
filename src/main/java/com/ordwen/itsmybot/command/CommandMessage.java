@@ -6,15 +6,6 @@ import org.bukkit.command.CommandSender;
 public class CommandMessage {
 
     /**
-     * Sends the player help message to the sender.
-     *
-     * @param sender the sender.
-     */
-    protected void help(CommandSender sender) {
-        Messages.PLAYER_HELP.send(sender);
-    }
-
-    /**
      * Sends the no permission message to the sender.
      *
      * @param sender the sender.

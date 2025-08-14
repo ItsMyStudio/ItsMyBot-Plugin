@@ -21,6 +21,11 @@ public class DiscordCommand extends CommandMessage implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission(Permissions.USE.get())) {
+            noPermission(sender);
+            return true;
+        }
+
         if (args.length >= 1 && "reload".equalsIgnoreCase(args[0])) {
             if (sender.hasPermission(Permissions.RELOAD.get())) {
                 reloadService.reload();
@@ -38,19 +43,21 @@ public class DiscordCommand extends CommandMessage implements CommandExecutor {
 
         final Player player = (Player) sender;
 
-        if (args.length >= 1) {
-            final CommandHandler handler = commandRegistry.getCommandHandler(args[0]);
-            if (handler != null) {
-                if (player.hasPermission(handler.getPermission())) {
-                    handler.execute(player, args);
-                    return true;
-                } else {
-                    noPermission(player);
-                }
+        if (args.length == 0) {
+            Messages.JOIN_DISCORD.send(player);
+            return true;
+        }
+
+        final CommandHandler handler = commandRegistry.getCommandHandler(args[0]);
+        if (handler != null) {
+            if (player.hasPermission(handler.getPermission())) {
+                handler.execute(player, args);
+                return true;
+            } else {
+                noPermission(player);
             }
         }
 
-        help(sender);
         return true;
     }
 }
