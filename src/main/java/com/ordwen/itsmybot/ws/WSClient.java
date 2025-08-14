@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.ordwen.itsmybot.ItsMyBotPlugin;
 import com.ordwen.itsmybot.configuration.essential.WSConfig;
 import com.ordwen.itsmybot.util.PluginLogger;
+import com.ordwen.itsmybot.ws.handler.PlaceholderUtil;
 import com.ordwen.itsmybot.ws.handler.role.RoleSyncUtil;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
@@ -129,6 +130,10 @@ public class WSClient extends WebSocketListener {
                 RoleSyncUtil.handleSyncRole(plugin, json);
                 handled = true;
                 break;
+            case "PLACEHOLDER":
+                PlaceholderUtil.handlePlaceholderRequest(plugin, json);
+                handled = true;
+                break;
             default:
                 break;
         }
@@ -155,6 +160,22 @@ public class WSClient extends WebSocketListener {
             webSocket.close(1000, "Authentication failed");
         } else {
             PluginLogger.warn("Received unexpected authentication response type: " + type);
+        }
+    }
+
+    public void sendResponse(JsonObject response, String id) {
+        if (response == null) return;
+        if (id != null && !response.has("id")) {
+            response.addProperty("id", id);
+        }
+        if (webSocket == null) {
+            PluginLogger.error("WebSocket is not connected; cannot send response: " + response);
+            return;
+        }
+        try {
+            webSocket.send(gson.toJson(response));
+        } catch (Exception ex) {
+            PluginLogger.error("Failed to send WebSocket response: " + ex.getMessage());
         }
     }
 
