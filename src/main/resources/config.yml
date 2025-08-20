@@ -1,8 +1,23 @@
+# ################################################################################################
+#
+#    ██╗████████╗███████╗███╗   ███╗██╗   ██╗██████╗  ██████╗ ████████╗
+#    ██║╚══██╔══╝██╔════╝████╗ ████║╚██╗ ██╔╝██╔══██╗██╔═══██╗╚══██╔══╝
+#    ██║   ██║   ███████╗██╔████╔██║ ╚████╔╝ ██████╔╝██║   ██║   ██║
+#    ██║   ██║   ╚════██║██║╚██╔╝██║  ╚██╔╝  ██╔══██╗██║   ██║   ██║
+#    ██║   ██║   ███████║██║ ╚═╝ ██║   ██║   ██████╔╝╚██████╔╝   ██║
+#    ╚═╝   ╚═╝   ╚══════╝╚═╝     ╚═╝   ╚═╝   ╚═════╝  ╚═════╝    ╚═╝
+#
+#      Contact: @itsme-to
+#      Support: https://discord.gg/itsme-to
+#      Documentation: https://docs.itsme.to/itsmybot/addons/minecraft
+#
+# ################################################################################################
+
 websocket:
-  host: "localhost" # WebSocket server host
+  host: "localhost" # WebSocket server host, IP and port of your bot’s hosting.
   port: 8765 # WebSocket server port
-  server_id: "mc-server-1" # Unique identifier for the server
-  jwt_secret: "#### REPLACE WITH YOUR SECRET ####" # Secret key for JWT signing
+  server_id: "mc-server-1" # Unique identifier for the server, this is mainly used to set the main server on the bot, change the ID for each server you connect to the bot.
+  jwt_secret: "#### REPLACE WITH YOUR SECRET ####" # Put your secret here, you can find it in the following file in the bot: /configs/Minecraft/token.secret
 
 # Prefix for chat messages
-prefix: "<gray>[<aqua>ItsMyBot</aqua>]</gray> "
+prefix: "<bold><#5865F2>ᴅɪꜱᴄᴏʀᴅ</#5865F2></bold> <#868AB0>»</#868AB0>"
