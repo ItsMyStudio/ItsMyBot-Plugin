@@ -3,6 +3,7 @@ package com.ordwen.itsmybot.ws;
 import com.google.gson.JsonObject;
 import com.ordwen.itsmybot.ItsMyBotPlugin;
 import com.ordwen.itsmybot.configuration.essential.WSConfig;
+import com.ordwen.itsmybot.enumeration.Messages;
 import com.ordwen.itsmybot.ws.handler.command.WSCommandHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -19,6 +20,12 @@ public class WSCommandExecutor {
 
     public void execute(Player player, String[] args, WSCommandHandler handler) {
         final WSClient client = plugin.getWSClient();
+
+        if (client == null || !client.isReady()) {
+            Bukkit.getScheduler().runTask(plugin, () -> Messages.BOT_NOT_CONNECTED.send(player));
+            return;
+        }
+
         final JsonObject message = handler.buildRequest(player, args);
 
         if (!message.has("id")) {

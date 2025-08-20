@@ -36,10 +36,17 @@ public class WSClient extends WebSocketListener {
     private ScheduledFuture<?> reconnectTask;
     private volatile boolean shouldReconnect;
 
+    private volatile boolean connected = false;
+    private volatile boolean authenticated = false;
+
     public WSClient(ItsMyBotPlugin plugin) {
         this.plugin = plugin;
         this.client = createClientAllowingSelfSigned();
         this.shouldReconnect = false;
+    }
+
+    public boolean isReady() {
+        return connected && authenticated;
     }
 
     public void connect() {
@@ -74,6 +81,9 @@ public class WSClient extends WebSocketListener {
         shouldReconnect = false;
         cancelReconnect();
 
+        this.connected = false;
+        this.authenticated = false;
+
         if (webSocket != null) {
             webSocket.cancel();
             webSocket = null;
@@ -96,6 +106,8 @@ public class WSClient extends WebSocketListener {
     @Override
     public void onOpen(WebSocket webSocket, @NotNull Response response) {
         this.webSocket = webSocket;
+        this.connected = true;
+        this.authenticated = false;
         cancelReconnect();
 
         PluginLogger.info("WebSocket connection established.");
@@ -153,8 +165,10 @@ public class WSClient extends WebSocketListener {
 
     private void handleAuthResponse(JsonObject json, String type) {
         if (type.equals("AUTH_SUCCESS")) {
+            this.authenticated = true;
             PluginLogger.info("Authentication successful. WebSocket is ready for use.");
         } else if (type.equals("AUTH_FAIL")) {
+            this.authenticated = false;
             String errorMessage = json.has("error") ? json.get("error").getAsString() : "Unknown error";
             PluginLogger.error("Authentication failed: " + errorMessage);
             webSocket.close(1000, "Authentication failed");
@@ -181,12 +195,8 @@ public class WSClient extends WebSocketListener {
 
     @Override
     public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
-        //PluginLogger.warn("Failed to communicate with WS server. Details: " + t.getMessage());
-        //PluginLogger.warn("If this is happening on reload, you can ignore this message.");
-        //if (response != null) {
-        //    PluginLogger.error("Response: " + response.message());
-        //}
-
+        this.connected = false;
+        this.authenticated = false;
         scheduleReconnect();
     }
 
@@ -197,6 +207,9 @@ public class WSClient extends WebSocketListener {
 
     @Override
     public void onClosed(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
+        this.connected = false;
+        this.authenticated = false;
+
         String str = "WebSocket connection closed";
         if (!reason.isEmpty()) {
             str += "with reason: " + reason;
