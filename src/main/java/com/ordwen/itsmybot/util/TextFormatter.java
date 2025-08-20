@@ -1,5 +1,6 @@
 package com.ordwen.itsmybot.util;
 
+import com.ordwen.itsmybot.configuration.essential.Prefix;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
@@ -22,9 +23,11 @@ public class TextFormatter {
     public static void send(Player player, String rawMessage) {
         if (rawMessage == null || audiences == null) return;
 
+        final String withPrefix = rawMessage.replace("<prefix>", Prefix.getPrefix());
+
         final String withPlaceholders = PluginUtils.isPluginEnabled("PlaceholderAPI")
-                ? PlaceholderAPI.setPlaceholders(player, rawMessage)
-                : rawMessage;
+                ? PlaceholderAPI.setPlaceholders(player, withPrefix)
+                : withPrefix;
 
         final Component component = MINI_MESSAGE.deserialize(withPlaceholders);
         audiences.player(player).sendMessage(component);
