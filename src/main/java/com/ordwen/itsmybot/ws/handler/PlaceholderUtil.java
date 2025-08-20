@@ -26,7 +26,12 @@ public final class PlaceholderUtil {
                 final String resolved = resolvePlaceholder(plugin, uuidStr, rawPlaceholder);
                 sendResult(plugin, base, resolved);
             } catch (PlayerNotFound e) {
-                sendError(plugin, base, "PLAYER_NOT_FOUND", null);
+                try {
+                    final String resolved = PlaceholderAPI.setPlaceholders(null, rawPlaceholder);
+                    sendResult(plugin, base, resolved);
+                } catch (Exception ex) {
+                    sendError(plugin, base, "PLAYER_NOT_FOUND", null);
+                }
             } catch (Exception e) {
                 sendError(plugin, base, "INTERNAL_ERROR", e.getMessage());
             }
