@@ -6,6 +6,7 @@ import com.ordwen.itsmybot.command.DiscordCompleter;
 import com.ordwen.itsmybot.command.handler.LinkCommand;
 import com.ordwen.itsmybot.command.handler.UnlinkCommand;
 import com.ordwen.itsmybot.command.handler.player.ClaimCommandHandler;
+import com.ordwen.itsmybot.command.handler.player.HelpCommandHandler;
 import com.ordwen.itsmybot.command.handler.player.LinkCommandHandler;
 import com.ordwen.itsmybot.command.handler.player.UnlinkCommandHandler;
 import com.ordwen.itsmybot.file.FilesManager;
@@ -51,6 +52,7 @@ public class ItsMyBotPlugin extends JavaPlugin {
 
         final CommandRegistry commandRegistry = new CommandRegistry();
         commandRegistry.registerCommand(new ClaimCommandHandler(this));
+        commandRegistry.registerCommand(new HelpCommandHandler());
 
         final LinkCommandHandler linkCommandHandler = new LinkCommandHandler(this);
         getCommand("link").setExecutor(new LinkCommand(linkCommandHandler));
