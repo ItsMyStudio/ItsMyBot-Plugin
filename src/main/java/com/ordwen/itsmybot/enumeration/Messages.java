@@ -11,15 +11,17 @@ public enum Messages {
     PLAYER_ONLY("player_only", "<prefix> <#E0E3FF>This command can only be executed by a player!</#E0E3FF>"),
     NO_PERMISSION("no_permission", "<prefix> <#E0E3FF>You do not have permission to execute this command!</#E0E3FF>"),
     PLAYER_HELP("player_help", String.join("\n",
-            "<#5865F2>ᴘʟᴀʏᴇʀ ᴄᴏᴍᴍᴀɴᴅꜱ:</#5865F2>",
-            "<#5865F2>/discord <#E0E3FF>: show the Discord link</#E0E3FF>",
-            "<#5865F2>/link <#E0E3FF>: link your Discord account</#E0E3FF>",
-            "<#5865F2>/unlink <#E0E3FF>: unlink your Discord account</#E0E3FF>",
-            "<#5865F2>/discord claim <#E0E3FF>: claim your Discord rewards</#E0E3FF>"
+            "<prefix> <#E0E3FF>ᴄᴏᴍᴍᴀɴᴅꜱ</#E0E3FF><br>",
+            "<#E0E3FF> • <#5865F2>/discord</#5865F2>: show the Discord link</#E0E3FF>",
+            "<#E0E3FF> • <#5865F2>/link</#5865F2>: link your Discord account</#E0E3FF>",
+            "<#E0E3FF> • <#5865F2>/unlink</#5865F2>: unlink your Discord account</#E0E3FF>",
+            "<#E0E3FF> • <#5865F2>/discord claim</#5865F2>: claim your Discord rewards</#E0E3FF>"
     )),
     ADMIN_HELP("admin_help", String.join("\n",
-            "<#5865F2>ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅꜱ:</#5865F2>",
-            "<#5865F2>/discord reload <#E0E3FF>: reload the plugin configuration</#E0E3FF>"
+            "<br><#E0E3FF> • <#5865F2>/discord reload</#5865F2>: reload the plugin configuration</#E0E3FF>",
+            "<br><#E0E3FF> • <#5865F2>ᴘʀᴏᴊᴇᴛ</#5865F2>: ItsMyStudio",
+            "<#E0E3FF> • <#5865F2>sᴜᴘᴘᴏʀᴛ</#5865F2>: <click:open_url:'https://itsmy.studio/discord'>itsmy.studio/discord</click>",
+            "<#E0E3FF> • <#5865F2>ᴅᴇᴠᴇʟᴏᴘᴇʀ</#5865F2>: <hover:show_text:'Discord: <#5865F2>@ordwen</#5865F2><br>GitHub: <#5865F2>github.com/Ordwen</#5865F2>'><click:open_url:'https://github.com/Ordwen'>Ordwen</click></hover>"
     )),
     ERROR_OCCURRED("error_occurred", "<prefix> <#E0E3FF>An error occurred while processing your request. Please contact support.</#E0E3FF>"),
     BOT_NOT_CONNECTED("bot_not_connected", "<prefix> <#E0E3FF>The bot is not connected to Discord! Please inform an administrator.</#E0E3FF>"),
@@ -31,7 +33,7 @@ public enum Messages {
     INVALID_CODE("invalid_code", "<prefix> <#E0E3FF>The code you provided is invalid! Please try again.</#E0E3FF>"),
     CLAIM_SUCCESS("claim_success", "<prefix> <#E0E3FF>You have successfully claimed your rewards!</#E0E3FF>"),
     CLAIM_NO_REWARD("claim_no_reward", "<prefix> <#E0E3FF>You have no rewards to claim at this time.</#E0E3FF>"),
-    PLUGIN_RELOADED("plugin_reloaded", " <prefix> <#E0E3FF>Plugin reloaded. Please check the console for any errors.</#E0E3FF>"),
+    PLUGIN_RELOADED("plugin_reloaded", "<prefix> <#E0E3FF>Plugin reloaded. Please check the console for any errors.</#E0E3FF>"),
     JOIN_DISCORD("join_discord", "<prefix> <#E0E3FF>Join our Discord to stay updated and link your account!</#E0E3FF> <click:\"open_url\":\"https://discord.gg/yourserver\"><#5865F2>ᴄʟɪᴄᴋ ᴛᴏ ᴊᴏɪɴ →</#5865F2></click>")
 
     ;
