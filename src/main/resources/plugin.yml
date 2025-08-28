@@ -1,5 +1,5 @@
 name: 'ItsMyBot-Plugin'
-main: com.ordwen.itsmybot.ItsMyBotPlugin
+main: studio.itsmy.itsmybot.ItsMyBotPlugin
 version: '1.0.0'
 api-version: 1.8
 
