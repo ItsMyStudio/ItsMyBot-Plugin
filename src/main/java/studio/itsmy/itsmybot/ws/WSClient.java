@@ -23,12 +23,49 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.*;
 
+/**
+ * WebSocket client responsible for connecting the plugin to the backend gateway.
+ * <p>
+ * Features:
+ * <ul>
+ *   <li>Secure connection (WSS) with optional trust-all strategy for self-signed certificates</li>
+ *   <li>JWT-based authentication on {@link #onOpen(WebSocket, Response)}</li>
+ *   <li>Automatic reconnection with backoff (fixed rate) when failures occur</li>
+ *   <li>Request/response correlation via {@code id} and {@link CompletableFuture}</li>
+ *   <li>Dispatching of server messages to domain handlers (role sync, placeholder)</li>
+ * </ul>
+ *
+ * <h2>Lifecycle</h2>
+ * <ol>
+ *   <li>{@link #connect()} establishes a new connection and requests auth.</li>
+ *   <li>On {@link #onOpen(WebSocket, Response)}, a short-lived JWT is created and sent.</li>
+ *   <li>On {@code AUTH_SUCCESS}, the client becomes {@code authenticated} and {@link #isReady()} returns true.</li>
+ *   <li>On any failure/close, {@link #scheduleReconnect()} triggers periodic attempts (if {@code shouldReconnect}).</li>
+ *   <li>{@link #disconnect()} stops reconnection and closes the socket.</li>
+ *   <li>{@link #shutdown()} releases executors and OkHttp resources.</li>
+ * </ol>
+ *
+ * <h2>Security</h2>
+ * The client can be configured to trust all certificates (see {@link #createClientAllowingSelfSigned()}).
+ * This simplifies development/self-signed deployments but reduces transport security guarantees.
+ * In production, prefer a properly signed certificate and a strict {@link HostnameVerifier}.
+ *
+ * <h2>Thread-safety</h2>
+ * - Pending requests are stored in a {@link ConcurrentHashMap}.<br>
+ * - Reconnect scheduling is guarded by {@code synchronized} methods ({@link #scheduleReconnect()}, {@link #cancelReconnect()}).
+ * - Connection state flags ({@code connected}, {@code authenticated}) are {@code volatile}.
+ */
 public class WSClient extends WebSocketListener {
 
     private final ItsMyBotPlugin plugin;
 
+    /** In-flight request futures, keyed by correlation id. */
     private final Map<String, CompletableFuture<JsonObject>> pendingRequests = new ConcurrentHashMap<>();
+
+    /** Single-thread scheduler for timeouts and reconnect attempts. */
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    /** JSON codec. */
     private final Gson gson = new Gson();
 
     private WebSocket webSocket;
@@ -39,16 +76,32 @@ public class WSClient extends WebSocketListener {
     private volatile boolean connected = false;
     private volatile boolean authenticated = false;
 
+    /**
+     * Creates a new WebSocket client instance.
+     *
+     * @param plugin main plugin instance
+     */
     public WSClient(ItsMyBotPlugin plugin) {
         this.plugin = plugin;
         this.client = createClientAllowingSelfSigned();
         this.shouldReconnect = false;
     }
 
+    /**
+     * Indicates whether the client is both connected and authenticated.
+     *
+     * @return {@code true} if the WebSocket is open and JWT auth succeeded
+     */
     public boolean isReady() {
         return connected && authenticated;
     }
 
+    /**
+     * Initiates (or re-initiates) a WebSocket connection.
+     * <p>
+     * Validates host/port from {@link WSConfig}, closes any previous socket, and starts a fresh connection.
+     * Also enables automatic reconnection until {@link #disconnect()} is called.
+     */
     public void connect() {
         shouldReconnect = true;
         cancelReconnect();
@@ -77,6 +130,11 @@ public class WSClient extends WebSocketListener {
         client.newWebSocket(request, this);
     }
 
+    /**
+     * Explicitly disconnects the WebSocket and disables automatic reconnection.
+     * <p>
+     * Resets {@code connected/authenticated} flags and cancels any scheduled reconnect task.
+     */
     public void disconnect() {
         shouldReconnect = false;
         cancelReconnect();
@@ -90,6 +148,11 @@ public class WSClient extends WebSocketListener {
         }
     }
 
+    /**
+     * Shuts down internal resources (scheduler and OkHttp executor/connection pool).
+     * <p>
+     * Call this once on plugin disable to avoid thread leaks.
+     */
     public void shutdown() {
         if (scheduler != null && !scheduler.isShutdown()) {
             scheduler.shutdownNow();
@@ -103,6 +166,12 @@ public class WSClient extends WebSocketListener {
         }
     }
 
+    /**
+     * Called by OkHttp when a connection is established.
+     * <p>
+     * Sets {@code connected}, clears any pending reconnect, logs success,
+     * and sends a short-lived JWT auth message to the server.
+     */
     @Override
     public void onOpen(WebSocket webSocket, @NotNull Response response) {
         this.webSocket = webSocket;
@@ -125,6 +194,15 @@ public class WSClient extends WebSocketListener {
         webSocket.send(authMessage);
     }
 
+    /**
+     * Called when a text message is received from the server.
+     * <p>
+     * Routes messages by {@code type} to feature handlers (auth, role sync, placeholder).
+     * If an {@code id} is present and corresponds to a pending request, the associated future is completed.
+     *
+     * @param webSocket the socket
+     * @param text      raw JSON text
+     */
     @Override
     public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
         final JsonObject json = gson.fromJson(text, JsonObject.class);
@@ -163,6 +241,14 @@ public class WSClient extends WebSocketListener {
         }
     }
 
+    /**
+     * Handles authentication responses ({@code AUTH_SUCCESS}/{@code AUTH_FAIL}).
+     * <p>
+     * On success, marks the client authenticated; on failure, logs reason and closes the socket.
+     *
+     * @param json auth payload
+     * @param type response type
+     */
     private void handleAuthResponse(JsonObject json, String type) {
         if (type.equals("AUTH_SUCCESS")) {
             this.authenticated = true;
@@ -177,6 +263,12 @@ public class WSClient extends WebSocketListener {
         }
     }
 
+    /**
+     * Sends a JSON response (server-initiated request handling) optionally binding the given {@code id}.
+     *
+     * @param response JSON payload to send
+     * @param id       correlation id to attach (added if missing and non-null)
+     */
     public void sendResponse(JsonObject response, String id) {
         if (response == null) return;
         if (id != null && !response.has("id")) {
@@ -193,6 +285,11 @@ public class WSClient extends WebSocketListener {
         }
     }
 
+    /**
+     * Called when a failure occurs (I/O, TLS, protocol).
+     * <p>
+     * Resets state and schedules reconnect attempts if enabled.
+     */
     @Override
     public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
         this.connected = false;
@@ -200,11 +297,19 @@ public class WSClient extends WebSocketListener {
         scheduleReconnect();
     }
 
+    /**
+     * Called when the server initiates closing; acknowledges with normal close code.
+     */
     @Override
     public void onClosing(WebSocket webSocket, int code, @NotNull String reason) {
         webSocket.close(1000, null);
     }
 
+    /**
+     * Called after the socket is closed.
+     * <p>
+     * Logs closure reason/code, resets state, and schedules reconnect attempts if enabled.
+     */
     @Override
     public void onClosed(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         this.connected = false;
@@ -227,12 +332,26 @@ public class WSClient extends WebSocketListener {
         scheduleReconnect();
     }
 
+    /**
+     * Sends a raw JSON string to the server (fire-and-forget).
+     *
+     * @param json raw JSON text
+     */
     public void sendMessage(String json) {
         if (webSocket != null) {
             webSocket.send(json);
         }
     }
 
+    /**
+     * Builds an {@link OkHttpClient} that trusts all certificates and applies a relaxed hostname verifier.
+     * <p>
+     * <strong>Warning:</strong> This reduces TLS security and is intended for development
+     * or controlled environments where a self-signed certificate is required.
+     *
+     * @return configured OkHttp client
+     * @throws IllegalStateException if SSL context initialization fails
+     */
     private OkHttpClient createClientAllowingSelfSigned() {
         try {
             final TrustManager[] trustAllCerts = new TrustManager[]{
@@ -277,6 +396,17 @@ public class WSClient extends WebSocketListener {
         }
     }
 
+    /**
+     * Sends a request expecting a response correlated by {@code id}.
+     * <p>
+     * The {@code id} is added to the outgoing message, a future is registered in {@link #pendingRequests},
+     * and a timeout (5s) is scheduled. When a matching response arrives in {@link #onMessage(WebSocket, String)},
+     * the future completes successfully; otherwise it completes exceptionally on timeout.
+     *
+     * @param message request payload (will be mutated to include {@code id})
+     * @param id      correlation id (must be unique per request)
+     * @return a future completing with the response JSON
+     */
     public CompletableFuture<JsonObject> sendRequest(JsonObject message, String id) {
         message.addProperty("id", id);
 
@@ -296,6 +426,10 @@ public class WSClient extends WebSocketListener {
         return future;
     }
 
+    /**
+     * Schedules periodic reconnection attempts (every 30 seconds) if not already scheduled
+     * and reconnection is enabled.
+     */
     private synchronized void scheduleReconnect() {
         if (!shouldReconnect) {
             return;
@@ -307,6 +441,9 @@ public class WSClient extends WebSocketListener {
         reconnectTask = scheduler.scheduleAtFixedRate(this::connect, 30, 30, TimeUnit.SECONDS);
     }
 
+    /**
+     * Cancels any scheduled reconnection task.
+     */
     private synchronized void cancelReconnect() {
         if (reconnectTask != null) {
             reconnectTask.cancel(false);

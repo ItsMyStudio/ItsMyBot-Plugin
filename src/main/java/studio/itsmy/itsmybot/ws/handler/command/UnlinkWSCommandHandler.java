@@ -5,6 +5,25 @@ import studio.itsmy.itsmybot.enumeration.Messages;
 import studio.itsmy.itsmybot.util.PluginLogger;
 import org.bukkit.entity.Player;
 
+/**
+ * WebSocket handler for unlinking a player's Discord account.
+ * <p>
+ * Request schema:
+ * <pre>{@code
+ * { "type": "UNLINK", "player_uuid": "<uuid>" }
+ * }</pre>
+ *
+ * <p>Expected responses:
+ * <ul>
+ *   <li>{@code UNLINK_SUCCESS} → sends {@link Messages#UNLINK_SUCCESS}</li>
+ *   <li>{@code UNLINK_FAIL} with {@code reason}:
+ *       <ul>
+ *         <li>{@code NOT_LINKED} → {@link Messages#NOT_LINKED}</li>
+ *         <li>other → {@link Messages#ERROR_OCCURRED} and logs details</li>
+ *       </ul>
+ *   </li>
+ * </ul>
+ */
 public class UnlinkWSCommandHandler implements WSCommandHandler {
 
     @Override
@@ -12,6 +31,9 @@ public class UnlinkWSCommandHandler implements WSCommandHandler {
         return "UNLINK";
     }
 
+    /**
+     * Builds the UNLINK request JSON object with player UUID.
+     */
     @Override
     public JsonObject buildRequest(Player player, String[] args) {
         final JsonObject request = new JsonObject();
@@ -20,6 +42,10 @@ public class UnlinkWSCommandHandler implements WSCommandHandler {
         return request;
     }
 
+    /**
+     * Handles the UNLINK response, sending appropriate messages to the player
+     * based on success or failure reasons.
+     */
     @Override
     public void handleResponse(Player player, JsonObject response) {
         final String type = response.get("type").getAsString();
@@ -39,6 +65,9 @@ public class UnlinkWSCommandHandler implements WSCommandHandler {
         }
     }
 
+    /**
+     * Logs the error and notifies the player with a generic message.
+     */
     @Override
     public void handleError(Player player, Throwable ex) {
         PluginLogger.error("WebSocket UNLINK error: " + ex.getMessage());

@@ -6,6 +6,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+/**
+ * Represents all translatable and configurable plugin messages.
+ * <p>
+ * Each message has a path (used to retrieve it from a {@code messages.yml} file)
+ * and a default message (used when no custom translation is provided).
+ *
+ * <p>Messages support MiniMessage/Adventure formatting for colors and interactions.
+ * You can send them directly to a {@link Player} or a generic {@link CommandSender}
+ * using the {@link #send(Player)} or {@link #send(CommandSender)} methods.
+ */
 public enum Messages {
 
     PLAYER_ONLY("player_only", "<prefix> <#E0E3FF>This command can only be executed by a player!</#E0E3FF>"),
@@ -46,6 +56,13 @@ public enum Messages {
         this.defaultMessage = message;
     }
 
+    /**
+     * Sends this message to any {@link CommandSender}.
+     * If the sender is a {@link Player}, formatting will be handled with MiniMessage;
+     * otherwise, a legacy-colored message is sent to the console.
+     *
+     * @param sender the recipient of the message
+     */
     public void send(CommandSender sender) {
         String msg = MessagesFile.getInstance().get(this.path, defaultMessage);
 
@@ -59,6 +76,11 @@ public enum Messages {
         }
     }
 
+    /**
+     * Sends this message to a specific {@link Player}.
+     *
+     * @param player the player to receive the message
+     */
     public void send(Player player) {
         String msg = MessagesFile.getInstance().get(this.path, defaultMessage);
 
@@ -68,18 +90,18 @@ public enum Messages {
     }
 
     /**
-     * Get the default value of the path.
+     * Gets the default message defined for this enum constant.
      *
-     * @return the default value of the path.
+     * @return the default MiniMessage-formatted string
      */
     public String getDefault() {
         return this.defaultMessage;
     }
 
     /**
-     * Get the path to the string.
+     * Gets the configuration path associated with this message.
      *
-     * @return the path to the string.
+     * @return the message path (key in messages.yml)
      */
     public String getPath() {
         return this.path;

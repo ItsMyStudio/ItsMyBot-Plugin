@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.luckperms.api.event.node.NodeMutateEvent;
 import studio.itsmy.itsmybot.ItsMyBotPlugin;
 import studio.itsmy.itsmybot.configuration.essential.WSConfig;
 import studio.itsmy.itsmybot.util.PluginLogger;
@@ -13,6 +14,42 @@ import org.bukkit.OfflinePlayer;
 
 import java.util.*;
 
+/**
+ * Utility methods for initiating and applying role synchronizations with the WebSocket backend.
+ * <p>
+ * Responsibilities:
+ * <ul>
+ *   <li>Build and send role sync requests (full or update) with current player groups.</li>
+ *   <li>Handle responses:
+ *       <ul>
+ *         <li>{@code ROLE_SYNC_SUCCESS}: apply add/remove deltas via Vault</li>
+ *         <li>{@code ROLE_SYNC_FAIL}: log reason</li>
+ *       </ul>
+ *   </li>
+ *   <li>Handle incoming {@code SYNC_ROLE} push messages to apply server-side changes.</li>
+ * </ul>
+ *
+ * <h2>JSON schema (request → response)</h2>
+ * <pre>{@code
+ * // Request (FULL_ROLE_SYNC or ROLE_SYNC_UPDATE)
+ * {
+ *   "type": "FULL_ROLE_SYNC" | "ROLE_SYNC_UPDATE",
+ *   "server_id": "...",
+ *   "player_uuid": "...",
+ *   "roles": ["group1", "group2", ...]
+ * }
+ *
+ * // Success response
+ * {
+ *   "type": "ROLE_SYNC_SUCCESS",
+ *   "add":    ["groupX", ...],
+ *   "remove": ["groupY", ...]
+ * }
+ *
+ * // Failure response
+ * { "type": "ROLE_SYNC_FAIL", "reason": "..." }
+ * }</pre>
+ */
 public final class RoleSyncUtil {
 
     private static final String TYPE_FULL_SYNC = "FULL_ROLE_SYNC";
@@ -20,16 +57,37 @@ public final class RoleSyncUtil {
     private static final String TYPE_SUCCESS = "ROLE_SYNC_SUCCESS";
     private static final String TYPE_FAIL = "ROLE_SYNC_FAIL";
 
-    private RoleSyncUtil() {}
+    /** Private constructor to prevent instantiation. */
+    private RoleSyncUtil() {
+    }
 
+    /**
+     * Sends a full role sync request for the given player (on join, for example).
+     *
+     * @param plugin plugin instance
+     * @param player target player (online or offline)
+     */
     public static void sendFullRoleSync(ItsMyBotPlugin plugin, OfflinePlayer player) {
         sendRoleSync(plugin, player, TYPE_FULL_SYNC);
     }
 
+    /**
+     * Sends a differential update request (triggered on untracked local changes).
+     *
+     * @param plugin plugin instance
+     * @param player target player
+     */
     public static void sendRoleSyncUpdate(ItsMyBotPlugin plugin, OfflinePlayer player) {
         sendRoleSync(plugin, player, TYPE_UPDATE);
     }
 
+    /**
+     * Builds and sends a role sync request, then processes the async response.
+     *
+     * @param plugin plugin instance
+     * @param player player
+     * @param type   {@code FULL_ROLE_SYNC} or {@code ROLE_SYNC_UPDATE}
+     */
     private static void sendRoleSync(ItsMyBotPlugin plugin, OfflinePlayer player, String type) {
         final Permission permission = plugin.getPermission();
         if (permission == null) return;
@@ -57,6 +115,12 @@ public final class RoleSyncUtil {
         );
     }
 
+    /**
+     * Handles a role sync response from the backend.
+     * <p>
+     * On success, extracts add/remove lists and applies them via Vault, after registering
+     * expected mutations in {@link LuckPermsSyncManager} to avoid feedback loops.
+     */
     private static void handleRoleSyncResponse(ItsMyBotPlugin plugin, OfflinePlayer player, JsonObject response) {
         final Permission perm = plugin.getPermission();
         if (perm == null) return;
@@ -74,6 +138,13 @@ public final class RoleSyncUtil {
         }
     }
 
+    /**
+     * Registers expected mutations then applies group deltas via Vault.
+     * <p>
+     * This ordering is <strong>critical</strong>: mutations must be registered before calling
+     * {@code playerAddGroup}/{@code playerRemoveGroup} to ensure {@link NodeMutateEvent}
+     * recognizes them as expected.
+     */
     private static void applyRoleChanges(ItsMyBotPlugin plugin, OfflinePlayer player, JsonObject response) {
         final Permission perm = plugin.getPermission();
         if (perm == null) return;
@@ -86,6 +157,16 @@ public final class RoleSyncUtil {
         registerExpectedMutations(player, perm, uuid, toAdd, toRemove, syncManager);
     }
 
+    /**
+     * Registers expected mutations and applies them via Vault.
+     *
+     * @param player      target player
+     * @param perm        Vault Permission service
+     * @param uuid        player uuid
+     * @param toAdd       groups to add
+     * @param toRemove    groups to remove
+     * @param syncManager sync manager to mark expected mutations
+     */
     private static void registerExpectedMutations(OfflinePlayer player, Permission perm, UUID uuid, List<String> toAdd, List<String> toRemove, LuckPermsSyncManager syncManager) {
         for (String role : toAdd) {
             syncManager.registerExpectedMutation(uuid, role, RoleChangeEvent.Action.ADD);
@@ -98,6 +179,11 @@ public final class RoleSyncUtil {
         applyRoleDelta(perm, player, toRemove, false);
     }
 
+    /**
+     * Applies group mutations through Vault.
+     *
+     * @param add if {@code true}, add groups; otherwise remove groups
+     */
     private static void applyRoleDelta(Permission perm, OfflinePlayer player, List<String> roles, boolean add) {
         for (String role : roles) {
             if (add) {
@@ -108,11 +194,22 @@ public final class RoleSyncUtil {
         }
     }
 
+    /**
+     * Logs a sync failure with a reason if provided.
+     */
     private static void logRoleSyncFailure(OfflinePlayer player, JsonObject response) {
         final String reason = response.has("reason") ? response.get("reason").getAsString() : "UNKNOWN";
         PluginLogger.warn("Role sync failed for " + player.getName() + ": " + reason);
     }
 
+    /**
+     * Handles an incoming push message {@code SYNC_ROLE} from the backend.
+     * <p>
+     * Extracts add/remove lists, registers them as expected, then applies them via Vault.
+     *
+     * @param plugin  plugin instance
+     * @param message JSON message containing {@code player_uuid}, {@code add}, {@code remove}
+     */
     public static void handleSyncRole(ItsMyBotPlugin plugin, JsonObject message) {
         final Permission perm = plugin.getPermission();
         if (perm == null) return;
@@ -131,6 +228,9 @@ public final class RoleSyncUtil {
         registerExpectedMutations(player, perm, uuid, toAdd, toRemove, syncManager);
     }
 
+    /**
+     * Utility to extract a string list from a JSON array field.
+     */
     private static List<String> extractStringList(JsonObject json, String key) {
         if (!json.has(key)) return Collections.emptyList();
         final JsonArray array = json.getAsJsonArray(key);

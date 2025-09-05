@@ -5,6 +5,33 @@ import studio.itsmy.itsmybot.enumeration.Messages;
 import studio.itsmy.itsmybot.util.PluginLogger;
 import org.bukkit.entity.Player;
 
+/**
+ * WebSocket handler for linking a player's Discord account using a code.
+ * <p>
+ * <strong>Precondition:</strong> {@code args[0]} must contain the link code.
+ *
+ * <p>Request schema:
+ * <pre>{@code
+ * {
+ *   "type": "LINK",
+ *   "player_uuid": "<uuid>",
+ *   "player_name": "<name>",
+ *   "code": "<link_code>"
+ * }
+ * }</pre>
+ *
+ * <p>Expected responses:
+ * <ul>
+ *   <li>{@code LINK_SUCCESS} → {@link Messages#LINK_SUCCESS}</li>
+ *   <li>{@code LINK_FAIL} with {@code reason}:
+ *       <ul>
+ *         <li>{@code INVALID_CODE} → {@link Messages#INVALID_CODE}</li>
+ *         <li>{@code ALREADY_LINKED} → {@link Messages#ALREADY_LINKED}</li>
+ *         <li>other → logs error + {@link Messages#ERROR_OCCURRED}</li>
+ *       </ul>
+ *   </li>
+ * </ul>
+ */
 public class LinkWSCommandHandler implements WSCommandHandler {
 
     @Override
@@ -12,6 +39,9 @@ public class LinkWSCommandHandler implements WSCommandHandler {
         return "LINK";
     }
 
+    /**
+     * Builds a LINK request with UUID, name and the provided link code.
+     */
     @Override
     public JsonObject buildRequest(Player player, String[] args) {
         final JsonObject request = new JsonObject();
@@ -22,6 +52,9 @@ public class LinkWSCommandHandler implements WSCommandHandler {
         return request;
     }
 
+    /**
+     * Interprets {@code LINK_SUCCESS} or {@code LINK_FAIL} with a reason.
+     */
     @Override
     public void handleResponse(Player player, JsonObject response) {
         final String type = response.get("type").getAsString();
@@ -46,6 +79,9 @@ public class LinkWSCommandHandler implements WSCommandHandler {
         }
     }
 
+    /**
+     * Logs the error and notifies the player with a generic message.
+     */
     @Override
     public void handleError(Player player, Throwable ex) {
         PluginLogger.error("WebSocket LINK error: " + ex.getMessage());
